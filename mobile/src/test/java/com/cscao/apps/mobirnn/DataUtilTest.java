@@ -11,7 +11,7 @@ import java.util.Arrays;
  *
  * Test weights parsing
  */
-public class ModelTest {
+public class DataUtilTest {
 
     @Test
     public void parseBias() throws Exception {
@@ -23,7 +23,7 @@ public class ModelTest {
                         5.147905349731445312e-01f, 9.793586134910583496e-01f};
         String testFilePath = getClass().getClassLoader().getResource("b_in.csv").getFile();
 
-        assertTrue(Arrays.equals(Model.parseBias(testFilePath), biases));
+        assertTrue(Arrays.equals(DataUtil.parseBias(testFilePath), biases));
 
     }
 
@@ -41,7 +41,7 @@ public class ModelTest {
 
         String testFilePath = getClass().getClassLoader().getResource("w_in.csv").getFile();
 
-        assertTrue(Arrays.deepEquals(Model.parseWeight(testFilePath), weights));
+        assertTrue(Arrays.deepEquals(DataUtil.parseWeight(testFilePath), weights));
     }
 
     @Test
@@ -53,13 +53,13 @@ public class ModelTest {
                         {2.3183500e-003f, -4.5470360e-002f, 3.8989350e-001f, 4.1454140e-001f},
                         {-1.8965500e-002f, -3.7763610e-002f, 3.0665100e-001f, 3.3332790e-001f}}};
         String testFilePath = getClass().getClassLoader().getResource("sensor_data").getFile();
-        assertTrue(Arrays.deepEquals(Model.parseInputData(testFilePath), data));
+        assertTrue(Arrays.deepEquals(DataUtil.parseInputData(testFilePath), data));
     }
 
     @Test
     public void parseLabel() throws Exception {
         int[] labels = {5, 4, 3, 2};
         String testFilePath = getClass().getClassLoader().getResource("y_test.txt").getFile();
-        assertTrue(Arrays.equals(Model.parseLabel(testFilePath), labels));
+        assertTrue(Arrays.equals(DataUtil.parseLabel(testFilePath), labels));
     }
 }
