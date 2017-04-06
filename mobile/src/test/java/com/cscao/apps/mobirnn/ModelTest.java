@@ -44,4 +44,22 @@ public class ModelTest {
         assertTrue(Arrays.deepEquals(Model.parseWeight(testFilePath), weights));
     }
 
+    @Test
+    public void parseInputData() throws Exception {
+        float[][][] data = {{{1.1653150e-002f, -2.9399040e-002f, 4.3746370e-001f, 5.3134920e-001f},
+                {1.3109090e-002f, -3.9728670e-002f, 4.6826410e-001f, 7.2106850e-001f},
+                {1.1268850e-002f, -5.2405860e-002f, 4.9825740e-001f, 5.2032840e-001f}},
+                {{2.7830730e-002f, -5.2106230e-002f, 4.7939570e-001f, 3.7262520e-001f},
+                        {2.3183500e-003f, -4.5470360e-002f, 3.8989350e-001f, 4.1454140e-001f},
+                        {-1.8965500e-002f, -3.7763610e-002f, 3.0665100e-001f, 3.3332790e-001f}}};
+        String testFilePath = getClass().getClassLoader().getResource("sensor_data").getFile();
+        assertTrue(Arrays.deepEquals(Model.parseInputData(testFilePath), data));
+    }
+
+    @Test
+    public void parseLabel() throws Exception {
+        int[] labels = {5, 4, 3, 2};
+        String testFilePath = getClass().getClassLoader().getResource("y_test.txt").getFile();
+        assertTrue(Arrays.equals(Model.parseLabel(testFilePath), labels));
+    }
 }
