@@ -2,6 +2,8 @@ package com.cscao.apps.mobirnn;
 
 import static org.junit.Assert.assertTrue;
 
+import com.cscao.apps.mobirnn.model.Matrix;
+
 import org.junit.Test;
 
 import java.util.Arrays;

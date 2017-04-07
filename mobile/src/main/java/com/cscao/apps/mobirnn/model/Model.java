@@ -1,16 +1,8 @@
-package com.cscao.apps.mobirnn;
-
-import static com.cscao.apps.mobirnn.DataUtil.argmax;
-import static com.cscao.apps.mobirnn.DataUtil.parseBias;
-import static com.cscao.apps.mobirnn.DataUtil.parseWeight;
-import static com.cscao.apps.mobirnn.DataUtil.relu;
-import static com.cscao.apps.mobirnn.DataUtil.sigmod;
-import static com.cscao.apps.mobirnn.DataUtil.tanh;
+package com.cscao.apps.mobirnn.model;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.Arrays;
 
 /**
  * Created by qqcao on 4/5/17Wednesday.
@@ -57,21 +49,21 @@ public class Model {
         if (layerSize != biasesPath.length) throw new AssertionError();
         this.layerSize = layerSize;
 
-        double[] b_in = parseBias(bInPath);
-        double[] b_out = parseBias(bOutPath);
+        double[] b_in = DataUtil.parseBias(bInPath);
+        double[] b_out = DataUtil.parseBias(bOutPath);
         this.hidden_units = b_in.length;
 
-        double[][] w_in = parseWeight(wInPath);
-        double[][] w_out = parseWeight(wOutPath);
+        double[][] w_in = DataUtil.parseWeight(wInPath);
+        double[][] w_out = DataUtil.parseWeight(wOutPath);
 
         double[][][] weights = new double[layerSize][][];
         for (int i = 0; i < layerSize; i++) {
-            weights[i] = parseWeight(dataPath + weightsPath[i]);
+            weights[i] = DataUtil.parseWeight(dataPath + weightsPath[i]);
         }
 
         double[][] biases = new double[layerSize][];
         for (int i = 0; i < layerSize; i++) {
-            biases[i] = parseBias(dataPath + biasesPath[i]);
+            biases[i] = DataUtil.parseBias(dataPath + biasesPath[i]);
         }
 
         this.weights = weights;
@@ -94,8 +86,8 @@ public class Model {
 
         int size = c_.length;
         for (int k = 0; k < size; k++) {
-            c_[k] = c_[k] * sigmod(f[k] + 1) + sigmod(i[k]) * tanh(j[k]);
-            h_[k] = tanh(c_[k]) * sigmod(o[k]);
+            c_[k] = c_[k] * DataUtil.sigmod(f[k] + 1) + DataUtil.sigmod(i[k]) * DataUtil.tanh(j[k]);
+            h_[k] = DataUtil.tanh(c_[k]) * DataUtil.sigmod(o[k]);
         }
 
         double[][] state = new double[2][];
@@ -108,7 +100,7 @@ public class Model {
         int timeSteps = x.length;
 
         double[][] outputs = new double[timeSteps][];
-        x = relu(Matrix.addVec(Matrix.multiply(x, w_in), b_in));
+        x = DataUtil.relu(Matrix.addVec(Matrix.multiply(x, w_in), b_in));
 
         for (int j = 0; j < layerSize; j++) {
             double[] c = new double[hidden_units];
@@ -127,7 +119,7 @@ public class Model {
         }
 
         double[] outProb = Matrix.vecAddVec(Matrix.vecMulMat(outputs[timeSteps - 1], w_out), b_out);
-        System.out.println("out:" + Arrays.toString(outProb).replaceAll("[\\[ | \\] | ,]", " "));
-        return argmax(outProb) + 1;
+//        System.out.println("out:" + Arrays.toString(outProb).replaceAll("[\\[ | \\] | ,]", " "));
+        return DataUtil.argmax(outProb) + 1;
     }
 }

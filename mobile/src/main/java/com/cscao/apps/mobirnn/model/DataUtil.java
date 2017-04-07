@@ -1,4 +1,4 @@
-package com.cscao.apps.mobirnn;
+package com.cscao.apps.mobirnn.model;
 
 import org.apache.commons.io.FileUtils;
 

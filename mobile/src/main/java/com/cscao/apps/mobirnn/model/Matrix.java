@@ -1,4 +1,4 @@
-package com.cscao.apps.mobirnn;
+package com.cscao.apps.mobirnn.model;
 
 /**
  * Created by qqcao on 4/6/17

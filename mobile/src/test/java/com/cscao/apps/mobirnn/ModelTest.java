@@ -1,9 +1,11 @@
 package com.cscao.apps.mobirnn;
 
-import static com.cscao.apps.mobirnn.DataUtil.parseInputData;
-import static com.cscao.apps.mobirnn.DataUtil.parseLabel;
+import static com.cscao.apps.mobirnn.model.DataUtil.parseInputData;
+import static com.cscao.apps.mobirnn.model.DataUtil.parseLabel;
 
 import static org.junit.Assert.assertTrue;
+
+import com.cscao.apps.mobirnn.model.Model;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
