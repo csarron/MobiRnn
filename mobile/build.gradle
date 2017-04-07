@@ -35,8 +35,9 @@ dependencies {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
     wearApp project(':wear')
-    compile 'com.google.android.gms:play-services-wearable:10.2.0'
+    compile 'com.google.android.gms:play-services-wearable:10.2.1'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     compile 'commons-io:commons-io:2.4'
+    compile 'com.orhanobut:logger:1.15'
     testCompile 'junit:junit:4.12'
 }

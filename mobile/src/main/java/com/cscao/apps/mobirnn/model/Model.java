@@ -20,8 +20,11 @@ public class Model {
     private double[] b_out;
     private int layerSize;
     private int hidden_units;
+    private boolean isModeCpu = true;
 
-    public Model() {
+    public Model(String modelFolder, boolean isModeCpu) throws IOException {
+        this(modelFolder);
+        this.isModeCpu = isModeCpu;
     }
 
     public Model(String dataFolder) throws IOException {
@@ -97,6 +100,14 @@ public class Model {
     }
 
     public int predict(double[][] x) {
+        if (isModeCpu) {
+            return predictOnCpu(x);
+        } else {
+            return predictOnGpu(x);
+        }
+    }
+
+    private int predictOnCpu(double[][] x) {
         int timeSteps = x.length;
 
         double[][] outputs = new double[timeSteps][];
@@ -121,5 +132,10 @@ public class Model {
         double[] outProb = Matrix.vecAddVec(Matrix.vecMulMat(outputs[timeSteps - 1], w_out), b_out);
 //        System.out.println("out:" + Arrays.toString(outProb).replaceAll("[\\[ | \\] | ,]", " "));
         return DataUtil.argmax(outProb) + 1;
+    }
+
+    // TODO: 4/7/17Friday using renderscript to implement gpu code
+    private int predictOnGpu(double[][] x) {
+        return 0;
     }
 }

@@ -1,7 +1,8 @@
 package com.cscao.apps.mobirnn;
 
-import static com.cscao.apps.mobirnn.model.DataUtil.parseInputData;
-import static com.cscao.apps.mobirnn.model.DataUtil.parseLabel;
+import static com.cscao.apps.mobirnn.helper.Util.getInputData;
+import static com.cscao.apps.mobirnn.helper.Util.getLabels;
+import static com.cscao.apps.mobirnn.helper.Util.getTimestampString;
 
 import android.Manifest;
 import android.app.Activity;
@@ -14,37 +15,58 @@ import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.util.Pair;
 import android.view.View;
+import android.widget.NumberPicker;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import com.cscao.apps.mobirnn.helper.Util;
 import com.cscao.apps.mobirnn.model.Model;
+import com.orhanobut.logger.Logger;
 
-import java.io.File;
 import java.io.IOException;
+import java.util.Locale;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements NumberPicker.OnValueChangeListener {
 
     //    // Used to load the 'native-lib' library on application startup.
 //    static {
 //        System.loadLibrary("native-lib");
 //    }
     public final int PERMISSIONS_REQUEST_CODE = 7;
+    private ToggleButton controlToggle;
+    private TextView mStatusTextView;
+    private TextView mResultTextView;
+    private ProgressBar mResultProgress;
 
-    private TextView mCpuTimeTextView;
-    private TextView mGpuTimeTextView;
     private Task mTask = new Task();
-
+    private boolean mIsCpuMode = true;
+    private int mSampleSize;
+    final String[] mSampleSizes= {"10", "50", "100", "200", "500", "1000"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mCpuTimeTextView = (TextView) findViewById(R.id.tv_time_cpu);
-        mGpuTimeTextView = (TextView) findViewById(R.id.tv_time_gpu);
-        // Example of a call to a native method
-//        TextView tv = (TextView) findViewById(R.id.sample_text);
-//        tv.setText(stringFromJNI());
+        controlToggle = (ToggleButton) findViewById(R.id.toggle_control);
+
+        mStatusTextView = (TextView) findViewById(R.id.tv_status);
+        mResultTextView = (TextView) findViewById(R.id.tv_result);
+        mResultProgress = (ProgressBar) findViewById(R.id.progress);
+        mResultProgress.setMax(100);
+
+        NumberPicker picker = (NumberPicker) findViewById(R.id.number_picker);
+        picker.setDescendantFocusability(NumberPicker.FOCUS_BLOCK_DESCENDANTS);
+        picker.setOnValueChangedListener(this);
+        picker.setDisplayedValues(mSampleSizes);
+        picker.setMinValue(0);
+        picker.setMaxValue(mSampleSizes.length - 1);
+        picker.setWrapSelectorWheel(true);
+        picker.setValue(2);
+        mSampleSize = 100;
+        Logger.i("Sample size initial value: %s", mSampleSize);
+
         checkPermissions();
 
     }
@@ -67,92 +89,165 @@ public class MainActivity extends Activity {
             @NonNull String permissions[], @NonNull int[] grantResults) {
         if (requestCode == PERMISSIONS_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Logger.d("Permission granted");
             } else {
                 Toast.makeText(this, "Please grant write permission", Toast.LENGTH_LONG).show();
             }
         }
     }
 
-    public void runOnCpu(View view) {
-        String dataPath = Util.getDataPath();
-        mTask.execute(dataPath);
+
+    public void onRadioButtonClicked(View view) {
+        switch (view.getId()) {
+            case R.id.radio_cpu:
+                mIsCpuMode = true;
+                Logger.d("selected cpu mode");
+                break;
+            case R.id.radio_gpu:
+                mIsCpuMode = false;
+                Logger.d("selected gpu mode");
+                break;
+            default:
+                mIsCpuMode = true;
+        }
     }
 
-    public void runOnGpu(View view) {
+    public void controlRun(View view) {
+        mTask.mIsCpuMode = mIsCpuMode;
+        mTask.mSampleSize = mSampleSize;
+
+        if (controlToggle.isChecked()) {
+            Logger.i("running task");
+            mTask.execute(Util.getDataPath());
+            Toast.makeText(this, R.string.run_model, Toast.LENGTH_SHORT).show();
+        } else {
+            mTask.cancel(true);
+            setTaskCancellationInfo();
+        }
+    }
+
+    private void setTaskCancellationInfo() {
+        Logger.i("task cancelled");
+        Toast.makeText(this, R.string.task_cancelled, Toast.LENGTH_SHORT).show();
+        String status = String.format(Locale.US, "%s: task cancelled", getTimestampString());
+        mStatusTextView.append(status);
+    }
+
+    @Override
+    public void onValueChange(NumberPicker picker, int oldVal, int newVal) {
+        Logger.i("Sample size changed from %s to %s", mSampleSizes[oldVal], mSampleSizes[newVal]);
+        mSampleSize = Integer.parseInt(mSampleSizes[newVal]);
     }
 
 
-    private class Task extends AsyncTask<String, Integer, Pair<Double, Double>> {
+    private class Task extends AsyncTask<String, String, Pair<Double, Double>> {
+
+        private boolean mIsCpuMode;
+        private int mSampleSize;
 
         @Override
         protected Pair<Double, Double> doInBackground(String... params) {
-            String modelFilePath = params[0];
+            String dataRootPath = params[0];
             Model lstmModel = null;
             Log.d("run", "begin model loading");
             try {
-                lstmModel = new Model(modelFilePath);
+                lstmModel = new Model(dataRootPath, mIsCpuMode);
+                publishProgress("0", "model loaded");
             } catch (IOException e) {
+                Logger.e("model cannot be created");
                 e.printStackTrace();
+                publishProgress("-1", "task cancelled");
+                this.cancel(true);
             }
             Log.d("run", "model created");
 
-            String labelFilePath =
-                    modelFilePath + File.separator + "test_data" + File.separator + "y_test.txt";
-            String inputFilePath =
-                    modelFilePath + File.separator + "test_data" + File.separator + "sensor";
-
             double[][][] inputs = new double[0][][];
             try {
-                inputs = parseInputData(inputFilePath);
-                Log.d("run", "input data parsed");
+                publishProgress("0", "begin parsing input data...");
+                inputs = getInputData(dataRootPath, mSampleSize);
+                publishProgress("0", "input data loaded");
             } catch (IOException e) {
+                Logger.e("input data cannot be parsed");
+                publishProgress("-1", "task cancelled");
                 e.printStackTrace();
+                this.cancel(true);
             }
 
-            int size = 100;
-            int[] predictedLabels = new int[size];
-            long beginTime = System.currentTimeMillis();
-            for (int i = 0; i < size; i++) {
-                assert lstmModel != null;
-                predictedLabels[i] = lstmModel.predict(inputs[i]);
-                Log.d("run", "predicted case:" + i + ", label: " + predictedLabels[i]);
-//            System.out.println(predictedLabels[i]);
-            }
-            long endTime = System.currentTimeMillis();
             int[] labels = new int[0];
             try {
-                labels = parseLabel(labelFilePath);
+                labels = getLabels(dataRootPath, mSampleSize);
+                publishProgress("0", "labels loaded");
             } catch (IOException e) {
+                Logger.e("label data cannot be parsed");
+                publishProgress("-1", "task cancelled");
                 e.printStackTrace();
+                this.cancel(true);
             }
+
+            int[] predictedLabels = new int[mSampleSize];
+
+            long beginTime = System.currentTimeMillis();
             int correct = 0;
-            for (int i = 0; i < size; i++) {
-                if (predictedLabels[i] == labels[i]) {
+            for (int i = 0; i < mSampleSize; i++) {
+                if (this.isCancelled()) {
+                    break;
+                }
+                assert lstmModel != null;
+                predictedLabels[i] = lstmModel.predict(inputs[i]);
+                boolean isCorrect = (predictedLabels[i] == labels[i]);
+                if (isCorrect) {
                     correct++;
                 }
+                String progress = String.format(Locale.US,
+                        "case: %d, label: %d, correct: %s", i, predictedLabels[i], isCorrect);
+                Logger.d(progress);
+                publishProgress("" + i, progress);
+
             }
-            double accuracy = correct * 100.0 / size;
+            long endTime = System.currentTimeMillis();
+
+            double accuracy = correct * 100.0 / mSampleSize;
             double time = (endTime - beginTime) / 1000.0;
             return Pair.create(accuracy, time);
         }
 
         @Override
         protected void onPreExecute() {
-            super.onPreExecute();
+            String mode = String.format(Locale.US,
+                    "running model on %s\n", mIsCpuMode ? "CPU" : "GPU");
+            mStatusTextView.append(mode);
+
+            String info = String.format(Locale.US,
+                    "%s: processing model and input data...\n", getTimestampString());
+            mStatusTextView.append(info);
         }
 
         @Override
         protected void onPostExecute(Pair<Double, Double> pair) {
             double accuracy = pair.first;
             double time = pair.second;
-            String show = "Accuracy is: " + accuracy + "%. " + "Time spent: " + time + " s";
+            String show = String.format(Locale.US,
+                    "Accuracy is: %s  %%. Time spent: %s s", accuracy, time);
+            mResultTextView.setText(show);
 
-            mCpuTimeTextView.setText(show);
+            String status = String.format(Locale.US, "%s: task finished\n", getTimestampString());
+            mStatusTextView.append(status);
+
+            controlToggle.setChecked(false);
         }
 
         @Override
-        protected void onProgressUpdate(Integer... values) {
-            super.onProgressUpdate(values);
+        protected void onProgressUpdate(String... values) {
+            int i = Integer.valueOf(values[0]);
+            if (i == -1) {
+                setTaskCancellationInfo();
+                return;
+            }
+            int progress = (int) ((i / (float) mSampleSize) * 100);
+            mResultProgress.setProgress(progress);
+
+            String status = String.format(Locale.US, "%s: %s\n", getTimestampString(), values[1]);
+            mStatusTextView.append(status);
         }
     }
 
