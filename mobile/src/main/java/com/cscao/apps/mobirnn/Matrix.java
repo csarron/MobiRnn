@@ -8,10 +8,10 @@ package com.cscao.apps.mobirnn;
 public class Matrix {
 
     // return B = A^T
-    public static float[][] transpose(float[][] a) {
+    public static double[][] transpose(double[][] a) {
         int m = a.length;
         int n = a[0].length;
-        float[][] b = new float[n][m];
+        double[][] b = new double[n][m];
         for (int i = 0; i < m; i++) {
             for (int j = 0; j < n; j++) {
                 b[j][i] = a[i][j];
@@ -21,10 +21,10 @@ public class Matrix {
     }
 
     // return c = a + b
-    public static float[][] add(float[][] a, float[][] b) {
+    public static double[][] add(double[][] a, double[][] b) {
         int m = a.length;
         int n = a[0].length;
-        float[][] c = new float[m][n];
+        double[][] c = new double[m][n];
         for (int i = 0; i < m; i++) {
             for (int j = 0; j < n; j++) {
                 c[i][j] = a[i][j] + b[i][j];
@@ -33,11 +33,11 @@ public class Matrix {
         return c;
     }
 
-    public static float[][] addVec(float[][] m, float[] v) {
-        float[][] r = new float[m.length][];
+    public static double[][] addVec(double[][] m, double[] v) {
+        double[][] r = new double[m.length][];
         for (int i = 0; i < m.length; i++) {
             int rowSize = m[i].length;
-            r[i] = new float[rowSize];
+            r[i] = new double[rowSize];
             for (int j = 0; j < rowSize; j++) {
                 r[i][j] = m[i][j] + v[j];
             }
@@ -45,14 +45,23 @@ public class Matrix {
         return r;
     }
 
+    public static double[] vecAddVec(double[] a, double[] b) {
+        int m = a.length;
+        double[] c = new double[m];
+        for (int i = 0; i < m; i++) {
+            c[i] = a[i] + b[i];
+        }
+        return c;
+    }
+
     // return c = a * b
-    public static float[][] multiply(float[][] a, float[][] b) {
+    public static double[][] multiply(double[][] a, double[][] b) {
         int m1 = a.length;
         int n1 = a[0].length;
         int m2 = b.length;
         int n2 = b[0].length;
         if (n1 != m2) throw new RuntimeException("dimension of a and b must be the same");
-        float[][] c = new float[m1][n2];
+        double[][] c = new double[m1][n2];
         for (int i = 0; i < m1; i++) {
             for (int j = 0; j < n2; j++) {
                 for (int k = 0; k < n1; k++) {
@@ -63,37 +72,42 @@ public class Matrix {
         return c;
     }
 
+    // vector-matrix multiplication (y = x^T A)
+    public static double[] vecMulMat(double[] x, double[][] a) {
+        int m = a.length;
+        int n = a[0].length;
+        if (x.length != m) throw new RuntimeException("Illegal matrix dimensions.");
+        double[] y = new double[n];
+        for (int j = 0; j < n; j++) {
+            for (int i = 0; i < m; i++) {
+                y[j] += a[i][j] * x[i];
+            }
+        }
+        return y;
+    }
 
-    public static float[][] concat(float[][] a, float[][] b) {
+    public static double[] concat(double[] a, double[] b) {
         int aSize = a.length;
         int bSize = b.length;
         if (aSize != bSize) {
             throw new RuntimeException(
                     "dimension of a:" + aSize + " and b:" + bSize + " must be the same");
         }
-        float[][] concat = new float[aSize + bSize][];
-        for (int i = 0; i < aSize; i++) {
-            concat[i] = new float[a[i].length];
-            System.arraycopy(a[i], 0, concat[i], 0, a[i].length);
-        }
-        for (int i = 0; i < bSize; i++) {
-            concat[i + aSize] = new float[b[i].length];
-            System.arraycopy(b[i], 0, concat[i + aSize], 0, b[i].length);
-        }
+        double[] concat = new double[aSize + bSize];
+        System.arraycopy(a, 0, concat, 0, aSize);
+        System.arraycopy(b, 0, concat, aSize, bSize);
+
         return concat;
     }
 
-    public static float[][] split(float[][] a, int splitSize, int resultIndex) {
-        int partitionSize = a[0].length / splitSize;
+    public static double[] split(double[] a, int splitSize, int resultIndex) {
+        int partitionSize = a.length / splitSize;
         if (resultIndex >= splitSize) {
             throw new RuntimeException("resultIndex:" + resultIndex
                     + " must be smaller than splitSize:" + splitSize);
         }
-        float[][] r = new float[a.length][partitionSize];
-        for (int i = 0; i < r.length; i++) {
-            System.arraycopy(a[i], resultIndex * partitionSize, r[i], 0, r[i].length);
-        }
-
+        double[] r = new double[partitionSize];
+        System.arraycopy(a, resultIndex * partitionSize, r, 0, partitionSize);
         return r;
     }
 }
