@@ -78,5 +78,12 @@ public class DataUtil {
         return label;
     }
 
+    public static float sigmod(float x) {
+        return (float) (1 / (1 + Math.exp(-x)));
+    }
+
+    public static float tanh(float x) {
+        return (float) Math.tanh(x);
+    }
 
 }
