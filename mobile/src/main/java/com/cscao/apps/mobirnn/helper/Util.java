@@ -29,6 +29,7 @@ import java.util.Random;
  */
 
 public class Util {
+    // TODO: 4/9/17 if lstm_har-data not existed on sdcard, then download it
     public static final String DATA_URL = "https://github.com/csarron/lstm_har/archive/data.zip";
     public static final String folder = "lstm_har-data";
     private static float[][][] cachedInputs;
