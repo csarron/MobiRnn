@@ -117,6 +117,7 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
     public void controlRun(View view) {
         if (controlToggle.isChecked()) {
             mResultTextView.setText("");
+            mStatusTextView.setText("");
             mTask = new Task();
             mTask.mIsCpuMode = mIsCpuMode;
             mTask.mSampleSize = mSampleSize;
@@ -194,6 +195,7 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
 
             long beginTime = System.currentTimeMillis();
             int correct = 0;
+            float accuracy = 0;
             for (int i = 0; i < mSampleSize; i++) {
                 if (this.isCancelled()) {
                     break;
@@ -203,16 +205,16 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
                 boolean isCorrect = (predictedLabels[i] == labels[i]);
                 if (isCorrect) {
                     correct++;
+                    accuracy = (float) (correct * 100.0 / (i + 1));
                 }
                 String progress = String.format(Locale.US,
                         "case: %d, label: %d, correct: %s", i, predictedLabels[i], isCorrect);
                 Logger.d(progress);
-                publishProgress("" + (i+1), progress);
+                publishProgress("" + (i + 1), progress);
 
             }
             long endTime = System.currentTimeMillis();
 
-            float accuracy = (float) (correct * 100.0 / mSampleSize);
             float time = (float) ((endTime - beginTime) / 1000.0);
             return Pair.create(accuracy, time);
         }
@@ -229,7 +231,16 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
         }
 
         @Override
+        protected void onCancelled(Pair<Float, Float> pair) {
+            updateUIUponTaskEnding(pair);
+        }
+
+        @Override
         protected void onPostExecute(Pair<Float, Float> pair) {
+            updateUIUponTaskEnding(pair);
+        }
+
+        private void updateUIUponTaskEnding(Pair<Float, Float> pair) {
             float accuracy = pair.first;
             float time = pair.second;
             String show = String.format(Locale.US,

@@ -16,8 +16,11 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Random;
 
 /**
  * Created by qqcao on 4/7/17.
@@ -28,6 +31,8 @@ import java.util.Locale;
 public class Util {
     public static final String DATA_URL = "https://github.com/csarron/lstm_har/archive/data.zip";
     public static final String folder = "lstm_har-data";
+    private static float[][][] cachedInputs;
+    private static final Random seed = new Random();
 
     public static String getDataPath() {
         File sdcard = Environment.getExternalStorageDirectory();
@@ -40,7 +45,24 @@ public class Util {
         return df.format(new Date());
     }
 
+    private static float[][][] getSampledInputs(float[][][] inputs, int size) {
+        Integer[] indice = new Integer[size];
+        for (int i = 0; i < indice.length; i++) {
+            indice[i] = i;
+        }
+        Collections.shuffle(Arrays.asList(indice), seed);
+        float[][][] sampledInputs = new float[size][][];
+        for (int i = 0; i < size; i++) {
+            sampledInputs[i] = inputs[indice[i]];
+        }
+        return sampledInputs;
+    }
+
     public static float[][][] getInputData(String folder, int sampleSize) throws IOException {
+        if (cachedInputs != null) {
+            return getSampledInputs(cachedInputs, sampleSize);
+        }
+
         final float[][][] inputs;
         final Kryo kryo = new Kryo();
         kryo.register(float[][][].class);
@@ -60,19 +82,19 @@ public class Util {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    Output output = null;
                     try {
-                        output = new Output(new FileOutputStream(dataBinFile));
+                        Output output = new Output(new FileOutputStream(dataBinFile));
+                        kryo.writeObject(output, inputs);
+                        output.close();
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();
                     }
-                    kryo.writeObject(output, inputs);
-                    output.close();
                 }
             }).start();
         }
 
-        return inputs;
+        cachedInputs = inputs;
+        return getSampledInputs(cachedInputs, sampleSize);
     }
 
     public static int[] getLabels(String folder, int sampleSize) throws IOException {

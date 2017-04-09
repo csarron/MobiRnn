@@ -4,9 +4,17 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import com.cscao.apps.mobirnn.model.DataUtil;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+import com.esotericsoftware.kryo.io.UnsafeMemoryInput;
+import com.esotericsoftware.kryo.io.UnsafeMemoryOutput;
 
 import org.junit.Test;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.util.Arrays;
 
 /**
@@ -57,6 +65,41 @@ public class DataUtilTest {
                         {-1.8965500e-002f, -3.7763610e-002f, 3.0665100e-001f, 3.3332790e-001f}}};
         String testFilePath = getClass().getClassLoader().getResource("sensor_data").getFile();
         assertTrue(Arrays.deepEquals(DataUtil.parseInputData(testFilePath), data));
+    }
+
+    @Test
+    public void serialize() throws Exception {
+        String testFilePath = getClass().getClassLoader().getResource("lstm_har-data").getFile();
+        String inputFilePath =
+                testFilePath + File.separator + "test_data" + File.separator + "sensor";
+        final float[][][] inputs;
+
+        final Kryo kryo = new Kryo();
+        kryo.register(float[][][].class);
+        final File dataBinFile = new File("data.bin");
+        if (dataBinFile.exists()) {
+            Input input = new UnsafeMemoryInput(new FileInputStream(dataBinFile));
+            inputs = kryo.readObject(input, float[][][].class);
+            input.close();
+        } else {
+            inputs = DataUtil.parseInputData(inputFilePath);
+            Output output = new UnsafeMemoryOutput(new FileOutputStream(dataBinFile));
+
+            kryo.writeObject(output, inputs);
+            output.close();
+        }
+
+//        Gson gson = new Gson();
+//        final File dataBinFile = new File("data.json");
+//        if (dataBinFile.exists()) {
+//            inputs = gson.fromJson(FileUtils.readFileToString(dataBinFile), float[][][].class);
+//        } else {
+//            inputs = DataUtil.parseInputData(inputFilePath);
+//            String result = gson.toJson(inputs);
+//            FileUtils.writeStringToFile(new File("data.json"), result);
+//        }
+
+
     }
 
     @Test
