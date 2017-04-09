@@ -166,17 +166,17 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
         private int mSampleSize;
         private long mSeed;
 
-        private int[] getSampledLabels(int[] labels, int size) {
+        private int[] getSampledLabels(int[] labels, int[] indices) {
+            int size = indices.length;
             int[] sampledLabels = new int[size];
-            int[] indices = getIndices(labels.length, size);
             for (int i = 0; i < size; i++) {
                 sampledLabels[i] = labels[indices[i]];
             }
             return sampledLabels;
         }
 
-        private float[][][] getSampledInputs(float[][][] inputs, int size) {
-            int[] indices = getIndices(inputs.length, size);
+        private float[][][] getSampledInputs(float[][][] inputs, int[] indices) {
+            int size = indices.length;
             float[][][] sampledInputs = new float[size][][];
             for (int i = 0; i < size; i++) {
                 sampledInputs[i] = inputs[indices[i]];
@@ -212,11 +212,13 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
             }
             Log.d("run", "model created");
 
+            int[] indices = new int[0];
             float[][][] inputs = new float[0][][];
             try {
                 publishProgress("0", "begin parsing input data...");
                 inputs = getInputData(dataRootPath);
-                inputs = getSampledInputs(inputs, mSampleSize);
+                indices = getIndices(inputs.length, mSampleSize);
+                inputs = getSampledInputs(inputs, indices);
                 publishProgress("0", "input data loaded");
             } catch (IOException e) {
                 Logger.e("input data cannot be parsed");
@@ -228,7 +230,7 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
             int[] labels = new int[0];
             try {
                 labels = getLabels(dataRootPath);
-                labels = getSampledLabels(labels, mSampleSize);
+                labels = getSampledLabels(labels, indices);
                 publishProgress("0", "labels loaded");
             } catch (IOException e) {
                 Logger.e("label data cannot be parsed");
@@ -253,8 +255,8 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
                     correct++;
                     accuracy = (float) (correct * 100.0 / (i + 1));
                 }
-                String progress = String.format(Locale.US,
-                        "case: %d, label: %d, correct: %s", i, predictedLabels[i], isCorrect);
+                String progress = String.format(Locale.US, " (%d) case: %d, label: %d, correct: %s",
+                        i, indices[i], predictedLabels[i], isCorrect);
                 Logger.d(progress);
                 publishProgress("" + (i + 1), progress);
 
