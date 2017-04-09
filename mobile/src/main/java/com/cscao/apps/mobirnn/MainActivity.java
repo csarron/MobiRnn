@@ -9,6 +9,7 @@ import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -27,7 +28,9 @@ import com.cscao.apps.mobirnn.model.Model;
 import com.orhanobut.logger.Logger;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Locale;
+import java.util.Random;
 
 public class MainActivity extends Activity implements NumberPicker.OnValueChangeListener {
 
@@ -41,7 +44,8 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
     private TextView mResultTextView;
     private ProgressBar mResultProgress;
 
-    private Task mTask = new Task();
+    private Task mTask;
+    private boolean mSeedChanged;
     private boolean mIsCpuMode = true;
     private int mSampleSize;
     final String[] mSampleSizes = {"10", "50", "100", "200", "500", "1000"};
@@ -121,6 +125,10 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
             mTask = new Task();
             mTask.mIsCpuMode = mIsCpuMode;
             mTask.mSampleSize = mSampleSize;
+            if (mSeedChanged) {
+                mTask.mSeed = SystemClock.currentThreadTimeMillis();
+                mSeedChanged = false;
+            }
             Logger.i("running task");
             mTask.execute(Util.getDataPath());
             Toast.makeText(this, R.string.run_model, Toast.LENGTH_SHORT).show();
@@ -146,11 +154,47 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
         mSampleSize = Integer.parseInt(mSampleSizes[newVal]);
     }
 
+    public void changeSeed(View view) {
+        mSeedChanged = true;
+        Toast.makeText(this, R.string.seed_changed, Toast.LENGTH_SHORT).show();
+    }
+
 
     private class Task extends AsyncTask<String, String, Pair<Float, Float>> {
 
         private boolean mIsCpuMode;
         private int mSampleSize;
+        private long mSeed;
+
+        private int[] getSampledLabels(int[] labels, int size) {
+            int[] sampledLabels = new int[size];
+            int[] indices = getIndices(labels.length, size);
+            for (int i = 0; i < size; i++) {
+                sampledLabels[i] = labels[indices[i]];
+            }
+            return sampledLabels;
+        }
+
+        private float[][][] getSampledInputs(float[][][] inputs, int size) {
+            int[] indices = getIndices(inputs.length, size);
+            float[][][] sampledInputs = new float[size][][];
+            for (int i = 0; i < size; i++) {
+                sampledInputs[i] = inputs[indices[i]];
+            }
+            return sampledInputs;
+        }
+
+        @NonNull
+        private int[] getIndices(int high, int size) {
+            int[] indices = new int[size];
+            Random r = new Random(mSeed);
+            for (int i = 0; i < indices.length; i++) {
+                indices[i] = r.nextInt(high);
+            }
+
+            Logger.d("indices: " + Arrays.toString(indices));
+            return indices;
+        }
 
         @Override
         protected Pair<Float, Float> doInBackground(String... params) {
@@ -171,7 +215,8 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
             float[][][] inputs = new float[0][][];
             try {
                 publishProgress("0", "begin parsing input data...");
-                inputs = getInputData(dataRootPath, mSampleSize);
+                inputs = getInputData(dataRootPath);
+                inputs = getSampledInputs(inputs, mSampleSize);
                 publishProgress("0", "input data loaded");
             } catch (IOException e) {
                 Logger.e("input data cannot be parsed");
@@ -182,7 +227,8 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
 
             int[] labels = new int[0];
             try {
-                labels = getLabels(dataRootPath, mSampleSize);
+                labels = getLabels(dataRootPath);
+                labels = getSampledLabels(labels, mSampleSize);
                 publishProgress("0", "labels loaded");
             } catch (IOException e) {
                 Logger.e("label data cannot be parsed");

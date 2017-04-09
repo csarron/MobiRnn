@@ -10,4 +10,5 @@
     <string name="run_model">Begin running model</string>
     <string name="task_cancelled">Running task cancelled</string>
     <string name="prediction_size">Prediction Size:</string>
+    <string name="seed_changed">sample seed changed</string>
 </resources>

@@ -58,6 +58,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
+            android:onClick="changeSeed"
             android:text="@string/prediction_size" />
 
         <NumberPicker
