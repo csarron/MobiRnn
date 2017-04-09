@@ -25,8 +25,8 @@
             android:id="@+id/radio_group"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:checkedButton="@+id/radio_cpu"
             android:layout_marginStart="20dp"
+            android:checkedButton="@+id/radio_cpu"
             android:orientation="horizontal">
 
             <RadioButton
@@ -52,25 +52,27 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal">
+
         <TextView
             android:id="@+id/tv_size"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
             android:text="@string/prediction_size" />
+
         <NumberPicker
             android:id="@+id/number_picker"
             android:layout_width="wrap_content"
             android:layout_height="60dp"
-            android:layout_marginStart="20dp"
-            android:layout_gravity="center" />
+            android:layout_gravity="center"
+            android:layout_marginStart="20dp" />
 
         <ToggleButton
             android:id="@+id/toggle_control"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
             android:layout_gravity="center"
+            android:layout_marginStart="20dp"
             android:checked="false"
             android:onClick="controlRun"
             android:textOff="@string/run"
@@ -84,6 +86,7 @@
         android:layout_height="20dp"
         android:layout_gravity="center"
         android:layout_marginTop="20dp" />
+
     <TextView
         android:id="@+id/tv_status_title"
         android:layout_width="wrap_content"
@@ -93,17 +96,16 @@
 
     <ScrollView
         android:id="@+id/scroll_view"
-        android:layout_width="350dp"
+        android:layout_width="wrap_content"
         android:layout_height="200dp">
 
         <TextView
             android:id="@+id/tv_status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:scrollbars="vertical"
-            android:maxLines="15"
             android:gravity="bottom"
-             />
+            android:maxLines="15"
+            android:scrollbars="vertical" />
 
     </ScrollView>
 

@@ -207,7 +207,7 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
                 String progress = String.format(Locale.US,
                         "case: %d, label: %d, correct: %s", i, predictedLabels[i], isCorrect);
                 Logger.d(progress);
-                publishProgress("" + i, progress);
+                publishProgress("" + (i+1), progress);
 
             }
             long endTime = System.currentTimeMillis();
