@@ -5,9 +5,15 @@ import static com.cscao.apps.mobirnn.model.DataUtil.parseLabel;
 
 import android.os.Environment;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import com.orhanobut.logger.Logger;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -35,10 +41,36 @@ public class Util {
     }
 
     public static double[][][] getInputData(String folder, int sampleSize) throws IOException {
-        Logger.i("begin parsing input data");
-        String inputFilePath = folder + File.separator + "test_data" + File.separator + "sensor";
-        double[][][] inputs = parseInputData(inputFilePath);
-        Logger.i("end parsing input data");
+        final double[][][] inputs;
+        final Kryo kryo = new Kryo();
+        kryo.register(double[][][].class);
+        final File dataBinFile = new File(getDataPath() + File.separator + "data.bin");
+        if (dataBinFile.exists()) {
+            Logger.i("begin reading input data bin: %s", dataBinFile.getAbsolutePath());
+            Input input = new Input(new FileInputStream(dataBinFile));
+            inputs = kryo.readObject(input, double[][][].class);
+            input.close();
+            Logger.i("begin reading input data bin: %s", dataBinFile.getAbsolutePath());
+        } else {
+            Logger.i("begin parsing input data");
+            String inputFilePath =
+                    folder + File.separator + "test_data" + File.separator + "sensor";
+            inputs = parseInputData(inputFilePath);
+            Logger.i("end parsing input data");
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    Output output = null;
+                    try {
+                        output = new Output(new FileOutputStream(dataBinFile));
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                    }
+                    kryo.writeObject(output, inputs);
+                    output.close();
+                }
+            }).start();
+        }
 
         return inputs;
     }

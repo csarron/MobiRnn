@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/activity_phone"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
@@ -53,11 +52,17 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal">
-
+        <TextView
+            android:id="@+id/tv_size"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:text="@string/prediction_size" />
         <NumberPicker
             android:id="@+id/number_picker"
             android:layout_width="wrap_content"
             android:layout_height="60dp"
+            android:layout_marginStart="20dp"
             android:layout_gravity="center" />
 
         <ToggleButton
@@ -78,18 +83,27 @@
         android:layout_width="200dp"
         android:layout_height="20dp"
         android:layout_gravity="center"
-        android:layout_margin="20dp" />
+        android:layout_marginTop="20dp" />
+    <TextView
+        android:id="@+id/tv_status_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="@string/status" />
 
     <ScrollView
         android:id="@+id/scroll_view"
-        android:layout_width="wrap_content"
+        android:layout_width="350dp"
         android:layout_height="200dp">
 
         <TextView
             android:id="@+id/tv_status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/status" />
+            android:scrollbars="vertical"
+            android:maxLines="15"
+            android:gravity="bottom"
+             />
 
     </ScrollView>
 
@@ -97,6 +111,5 @@
         android:id="@+id/tv_result"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
-        android:text="@string/result" />
+        android:layout_marginTop="40dp" />
 </LinearLayout>

@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.util.Pair;
 import android.view.View;
@@ -43,7 +44,7 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
     private Task mTask = new Task();
     private boolean mIsCpuMode = true;
     private int mSampleSize;
-    final String[] mSampleSizes= {"10", "50", "100", "200", "500", "1000"};
+    final String[] mSampleSizes = {"10", "50", "100", "200", "500", "1000"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,6 +53,7 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
         controlToggle = (ToggleButton) findViewById(R.id.toggle_control);
 
         mStatusTextView = (TextView) findViewById(R.id.tv_status);
+        mStatusTextView.setMovementMethod(new ScrollingMovementMethod());
         mResultTextView = (TextView) findViewById(R.id.tv_result);
         mResultProgress = (ProgressBar) findViewById(R.id.progress);
         mResultProgress.setMax(100);
@@ -113,24 +115,28 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
     }
 
     public void controlRun(View view) {
-        mTask.mIsCpuMode = mIsCpuMode;
-        mTask.mSampleSize = mSampleSize;
-
         if (controlToggle.isChecked()) {
+            mResultTextView.setText("");
+            mTask = new Task();
+            mTask.mIsCpuMode = mIsCpuMode;
+            mTask.mSampleSize = mSampleSize;
             Logger.i("running task");
             mTask.execute(Util.getDataPath());
             Toast.makeText(this, R.string.run_model, Toast.LENGTH_SHORT).show();
         } else {
             mTask.cancel(true);
-            setTaskCancellationInfo();
+            setTaskCancellationInfo("User stopped task, ");
         }
     }
 
-    private void setTaskCancellationInfo() {
+    private void setTaskCancellationInfo(String info) {
         Logger.i("task cancelled");
         Toast.makeText(this, R.string.task_cancelled, Toast.LENGTH_SHORT).show();
-        String status = String.format(Locale.US, "%s: task cancelled", getTimestampString());
+        String status = String.format(Locale.US, "%s: %s, task cancelled\n",
+                getTimestampString(), info);
         mStatusTextView.append(status);
+        mResultProgress.setProgress(0);
+        mResultTextView.setText("");
     }
 
     @Override
@@ -156,7 +162,7 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
             } catch (IOException e) {
                 Logger.e("model cannot be created");
                 e.printStackTrace();
-                publishProgress("-1", "task cancelled");
+                publishProgress("-1", "model cannot be created");
                 this.cancel(true);
             }
             Log.d("run", "model created");
@@ -168,7 +174,7 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
                 publishProgress("0", "input data loaded");
             } catch (IOException e) {
                 Logger.e("input data cannot be parsed");
-                publishProgress("-1", "task cancelled");
+                publishProgress("-1", "input data cannot be parsed");
                 e.printStackTrace();
                 this.cancel(true);
             }
@@ -179,7 +185,7 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
                 publishProgress("0", "labels loaded");
             } catch (IOException e) {
                 Logger.e("label data cannot be parsed");
-                publishProgress("-1", "task cancelled");
+                publishProgress("-1", "label data cannot be parsed");
                 e.printStackTrace();
                 this.cancel(true);
             }
@@ -239,14 +245,15 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
         @Override
         protected void onProgressUpdate(String... values) {
             int i = Integer.valueOf(values[0]);
+            String status = String.format(Locale.US, "%s: %s\n", getTimestampString(), values[1]);
+
             if (i == -1) {
-                setTaskCancellationInfo();
+                setTaskCancellationInfo(status);
                 return;
             }
+
             int progress = (int) ((i / (float) mSampleSize) * 100);
             mResultProgress.setProgress(progress);
-
-            String status = String.format(Locale.US, "%s: %s\n", getTimestampString(), values[1]);
             mStatusTextView.append(status);
         }
     }

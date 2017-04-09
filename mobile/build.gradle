@@ -39,5 +39,6 @@ dependencies {
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     compile 'commons-io:commons-io:2.4'
     compile 'com.orhanobut:logger:1.15'
+    compile 'com.esotericsoftware:kryo:4.0.0'
     testCompile 'junit:junit:4.12'
 }
