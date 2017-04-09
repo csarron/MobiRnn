@@ -40,15 +40,15 @@ public class Util {
         return df.format(new Date());
     }
 
-    public static double[][][] getInputData(String folder, int sampleSize) throws IOException {
-        final double[][][] inputs;
+    public static float[][][] getInputData(String folder, int sampleSize) throws IOException {
+        final float[][][] inputs;
         final Kryo kryo = new Kryo();
-        kryo.register(double[][][].class);
+        kryo.register(float[][][].class);
         final File dataBinFile = new File(getDataPath() + File.separator + "data.bin");
         if (dataBinFile.exists()) {
             Logger.i("begin reading input data bin: %s", dataBinFile.getAbsolutePath());
             Input input = new Input(new FileInputStream(dataBinFile));
-            inputs = kryo.readObject(input, double[][][].class);
+            inputs = kryo.readObject(input, float[][][].class);
             input.close();
             Logger.i("begin reading input data bin: %s", dataBinFile.getAbsolutePath());
         } else {

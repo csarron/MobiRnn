@@ -13,37 +13,37 @@ import java.util.List;
  */
 
 public class DataUtil {
-    public static double[] parseBias(String fileName) throws IOException {
+    public static float[] parseBias(String fileName) throws IOException {
         List<String> lines = FileUtils.readLines(new File(fileName));
         int size = lines.size();
-        double[] b = new double[size];
+        float[] b = new float[size];
         for (int i = 0; i < size; i++) {
-            b[i] = Double.valueOf(lines.get(i));
+            b[i] = Float.valueOf(lines.get(i));
         }
 
         return b;
     }
 
-    public static double[][] parseWeight(String fileName) throws IOException {
+    public static float[][] parseWeight(String fileName) throws IOException {
         List<String> lines = FileUtils.readLines(new File(fileName));
         int size = lines.size();
-        double[][] weights = new double[size][];
+        float[][] weights = new float[size][];
         for (int i = 0; i < size; i++) {
             String line = lines.get(i).trim().replaceAll("( )+", ",");
 //            System.out.println("line:" + line);
             String[] ws = line.split(",");
-            weights[i] = new double[ws.length];
+            weights[i] = new float[ws.length];
             for (int j = 0; j < ws.length; j++) {
-                weights[i][j] = Double.valueOf(ws[j]);
+                weights[i][j] = Float.valueOf(ws[j]);
             }
         }
         return weights;
     }
 
-    public static double[][][] parseInputData(String folder) throws IOException {
+    public static float[][][] parseInputData(String folder) throws IOException {
         String[] inputFileNames = new File(folder).list();
         int input_dim = inputFileNames.length;
-        double[][][] data = new double[input_dim][][];
+        float[][][] data = new float[input_dim][][];
 
         for (int i = 0; i < input_dim; i++) {
             String filePath = folder + File.separator + inputFileNames[i];
@@ -54,7 +54,7 @@ public class DataUtil {
         int samples = data[0].length;
         int steps = data[0][0].length;
         // System.out.println("samples: " + samples + "steps:" + steps);
-        double[][][] output = new double[samples][steps][input_dim];
+        float[][][] output = new float[samples][steps][input_dim];
         for (int i = 0; i < input_dim; i++) {
             for (int j = 0; j < samples; j++) {
                 for (int k = 0; k < steps; k++) {
@@ -78,17 +78,17 @@ public class DataUtil {
         return label;
     }
 
-    public static double sigmod(double x) {
-        return 1 / (1 + Math.exp(-x));
+    public static float sigmod(float x) {
+        return  1 / (1 + (float) Math.exp(-x));
     }
 
-    public static double tanh(double x) {
-        return Math.tanh(x);
+    public static float tanh(float x) {
+        return (float) Math.tanh(x);
     }
 
-    public static int argmax(double[] x) {
+    public static int argmax(float[] x) {
         int max = 0;
-        double a = 0.0f;
+        float a = 0.0f;
         for (int i = 0; i < x.length; i++) {
             if (x[i] > a) {
                 a = x[i];
@@ -98,7 +98,7 @@ public class DataUtil {
         return max;
     }
 
-    public static double[][] relu(double[][] x) {
+    public static float[][] relu(float[][] x) {
         for (int i = 0; i < x.length; i++) {
             for (int j = 0; j < x[i].length; j++) {
                 x[i][j] = Math.max(x[i][j], 0);

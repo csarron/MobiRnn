@@ -7,7 +7,6 @@ import static org.junit.Assert.assertTrue;
 
 import com.cscao.apps.mobirnn.model.Model;
 
-import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 
 import java.io.File;
@@ -28,7 +27,7 @@ public class ModelTest {
                 modelFilePath + File.separator + "test_data" + File.separator + "sensor";
         Model lstmModel = new Model(modelFilePath);
 
-        double[][][] inputs = parseInputData(inputFilePath);
+        float[][][] inputs = parseInputData(inputFilePath);
 
         int size = inputs.length;
         int[] predictedLabels = new int[size];
@@ -42,9 +41,9 @@ public class ModelTest {
         String result = Arrays.toString(predictedLabels).
                 replaceAll("\\[", "").replaceAll("\\]", "").replaceAll(", ", "\n");
 
-        File labelsFile = new File("jLables.txt");
-        System.out.println(labelsFile.getAbsolutePath());
-        FileUtils.writeStringToFile(labelsFile, result);
+//        File labelsFile = new File(modelFilePath + "jLables.txt");
+//        System.out.println(labelsFile.getAbsolutePath());
+//        FileUtils.writeStringToFile(labelsFile, result);
 
         String labelFilePath = getClass().getClassLoader().getResource("labels_np.log").getFile();
 

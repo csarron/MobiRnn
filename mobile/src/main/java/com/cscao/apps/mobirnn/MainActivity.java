@@ -146,13 +146,13 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
     }
 
 
-    private class Task extends AsyncTask<String, String, Pair<Double, Double>> {
+    private class Task extends AsyncTask<String, String, Pair<Float, Float>> {
 
         private boolean mIsCpuMode;
         private int mSampleSize;
 
         @Override
-        protected Pair<Double, Double> doInBackground(String... params) {
+        protected Pair<Float, Float> doInBackground(String... params) {
             String dataRootPath = params[0];
             Model lstmModel = null;
             Log.d("run", "begin model loading");
@@ -167,7 +167,7 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
             }
             Log.d("run", "model created");
 
-            double[][][] inputs = new double[0][][];
+            float[][][] inputs = new float[0][][];
             try {
                 publishProgress("0", "begin parsing input data...");
                 inputs = getInputData(dataRootPath, mSampleSize);
@@ -212,8 +212,8 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
             }
             long endTime = System.currentTimeMillis();
 
-            double accuracy = correct * 100.0 / mSampleSize;
-            double time = (endTime - beginTime) / 1000.0;
+            float accuracy = (float) (correct * 100.0 / mSampleSize);
+            float time = (float) ((endTime - beginTime) / 1000.0);
             return Pair.create(accuracy, time);
         }
 
@@ -229,9 +229,9 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
         }
 
         @Override
-        protected void onPostExecute(Pair<Double, Double> pair) {
-            double accuracy = pair.first;
-            double time = pair.second;
+        protected void onPostExecute(Pair<Float, Float> pair) {
+            float accuracy = pair.first;
+            float time = pair.second;
             String show = String.format(Locale.US,
                     "Accuracy is: %s  %%. Time spent: %s s", accuracy, time);
             mResultTextView.setText(show);
