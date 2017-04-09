@@ -85,7 +85,9 @@
         android:layout_width="200dp"
         android:layout_height="20dp"
         android:layout_gravity="center"
-        android:layout_marginTop="20dp" />
+        android:layout_marginTop="20dp"
+        android:progressTint="@android:color/holo_blue_dark"
+        android:progressBackgroundTint="@android:color/darker_gray"/>
 
     <TextView
         android:id="@+id/tv_status_title"
