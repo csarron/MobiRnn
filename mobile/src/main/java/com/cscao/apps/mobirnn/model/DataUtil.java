@@ -78,6 +78,16 @@ public class DataUtil {
         return label;
     }
 
+    public static float[] alter2Dto1D(float[][] x) {
+        int timeSteps = x.length;
+        int inDim = x[0].length;
+        float[] converted = new float[timeSteps * inDim];
+        for (int i = 0; i < timeSteps; i++) {
+            System.arraycopy(x[i], 0, converted, i * inDim, inDim);
+        }
+        return converted;
+    }
+
     public static float sigmod(float x) {
         return  1 / (1 + (float) Math.exp(-x));
     }

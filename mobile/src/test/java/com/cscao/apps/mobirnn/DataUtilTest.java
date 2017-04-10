@@ -23,6 +23,13 @@ import java.util.Arrays;
 public class DataUtilTest {
 
     @Test
+    public void alter2Dto1D() throws Exception {
+        float[][] a = {{1, 2}, {3, 4}, {5, 6}};
+        float[] b = {1, 2, 3, 4, 5, 6};
+        assertTrue(Arrays.equals(DataUtil.alter2Dto1D(a), b));
+    }
+
+    @Test
     public void parseBias() throws Exception {
         float[] biases =
                 {6.430978178977966309e-01f, 1.422856748104095459e-01f,

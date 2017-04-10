@@ -52,6 +52,11 @@ public class MatrixTest {
         float[][] b = {{10, 20, 30, 40}, {50, 60, 70, 80}, {90, 100, 110, 120}};
         float[][] c = {{380, 440, 500, 560}, {830, 980, 1130, 1280}};
         assertTrue(Arrays.deepEquals(Matrix.multiply(a, b), c));
+
+        float[][] a1 = {{1, 2, 3}, {4, 5, 6}};
+        float[][] b1 = {{10, 20}, {30, 40}, {50, 60}};
+        float[][] c1 = {{220, 280}, {490, 640}};
+        assertTrue(Arrays.deepEquals(Matrix.multiply(a1, b1), c1));
     }
 
     @Test

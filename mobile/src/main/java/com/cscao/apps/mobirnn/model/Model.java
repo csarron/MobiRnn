@@ -1,8 +1,18 @@
 package com.cscao.apps.mobirnn.model;
 
+import static com.cscao.apps.mobirnn.model.DataUtil.alter2Dto1D;
+
+import android.renderscript.Allocation;
+import android.renderscript.Element;
+import android.renderscript.RenderScript;
+import android.renderscript.Type;
+
+import com.cscao.apps.mobirnn.ScriptC_main;
+
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * Created by qqcao on 4/5/17Wednesday.
@@ -21,6 +31,7 @@ public class Model {
     private int layerSize;
     private int hidden_units;
     private boolean isModeCpu = true;
+    private RenderScript mRs;
 
     public Model(String modelFolder, boolean isModeCpu) throws IOException {
         this(modelFolder);
@@ -134,8 +145,77 @@ public class Model {
         return DataUtil.argmax(outProb) + 1;
     }
 
-    // TODO: 4/7/17Friday using renderscript to implement gpu code
     private int predictOnGpu(float[][] x) {
-        return 0;
+        if (mRs == null) {
+            return 0;
+        }
+
+//        float[][] a = {{1, 2, 3}, {4, 5, 6}};
+//        float[][] b = {{10, 20, 30, 40}, {50, 60, 70, 80}, {90, 100, 110, 120}};
+//        float[][] c1 = {{380, 440, 500, 560}, {830, 980, 1130, 1280}};
+        int timeSteps = x.length; // dimY
+        int inDim = x[0].length; // dimX
+        int outDim = w_out[0].length;
+        float[] convertedX = alter2Dto1D(x);
+        float[] convertedWIn = alter2Dto1D(w_in);
+        float[] convertedWOut = alter2Dto1D(w_out);
+
+        ScriptC_main scriptC_main = new ScriptC_main(mRs);
+        scriptC_main.set_timeSteps(timeSteps);
+        scriptC_main.set_inputDims(inDim);
+        scriptC_main.set_outputDims(outDim);
+        scriptC_main.set_hiddenUnites(hidden_units);
+
+        // initialize input allocation
+        Type inRawType = Type.createXY(mRs, Element.F32(mRs), inDim, timeSteps);
+        Allocation inputRawAlloc = Allocation.createTyped(mRs, inRawType);
+        inputRawAlloc.copyFrom(convertedX);
+        scriptC_main.set_inputRaw(inputRawAlloc);
+
+        // initialize model parameters allocation
+        Type wInType = Type.createXY(mRs, Element.F32(mRs), inDim, hidden_units);
+        Allocation wInAlloc = Allocation.createTyped(mRs, wInType);
+        wInAlloc.copyFrom(convertedWIn);
+        scriptC_main.set_w_in(wInAlloc);
+
+        Allocation bInAlloc = Allocation.createSized(mRs, Element.F32(mRs), hidden_units);
+        bInAlloc.copyFrom(b_in);
+        scriptC_main.set_b_in(bInAlloc);
+
+        Type wOutType = Type.createXY(mRs, Element.F32(mRs), outDim, hidden_units);
+        Allocation wOutAlloc = Allocation.createTyped(mRs, wOutType);
+        wOutAlloc.copyFrom(convertedWOut);
+        scriptC_main.set_w_out(wOutAlloc);
+
+        Allocation bOutAlloc = Allocation.createSized(mRs, Element.F32(mRs), outDim);
+        bOutAlloc.copyFrom(b_out);
+        scriptC_main.set_b_out(bOutAlloc);
+
+        Type inputsType = Type.createXY(mRs, Element.F32(mRs), hidden_units, timeSteps);
+        Allocation inputsAlloc = Allocation.createTyped(mRs, inputsType);
+        float[] inputs = new float[timeSteps * hidden_units];
+//        scriptC_main.set_matAB(inputsAlloc);
+//        scriptC_main.set_matA(inputRawAlloc);
+//        scriptC_main.set_matB(wInAlloc);
+//        scriptC_main.set_sameDim(inDim);
+        scriptC_main.forEach_input_transform(inputsAlloc);
+
+        inputsAlloc.copyTo(inputs);
+        System.out.println("inputs: " + Arrays.toString(inputs));
+
+        // initialize output label allocation
+        Allocation labelProbAlloc = Allocation.createSized(mRs, Element.F32(mRs), outDim);
+        scriptC_main.set_label_prob(labelProbAlloc);
+        float[] labelProb = new float[outDim];
+
+        // copy result back
+        labelProbAlloc.copyTo(labelProb);
+        int label = DataUtil.argmax(labelProb) + 1;
+        System.out.println(label);
+        return label;
+    }
+
+    public void setRs(RenderScript rs) {
+        mRs = rs;
     }
 }

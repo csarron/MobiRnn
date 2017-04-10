@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.renderscript.RenderScript;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -46,7 +47,7 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
 
     private Task mTask;
     private boolean mSeedChanged;
-    private boolean mIsCpuMode = true;
+    private boolean mIsCpuMode = false;
     private int mSampleSize;
     final String[] mSampleSizes = {"10", "50", "100", "200", "500"};
 
@@ -69,8 +70,8 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
         picker.setMinValue(0);
         picker.setMaxValue(mSampleSizes.length - 1);
         picker.setWrapSelectorWheel(true);
-        picker.setValue(2);
-        mSampleSize = 100;
+        picker.setValue(0);
+        mSampleSize = 10;
         Logger.i("Sample size initial value: %s", mSampleSize);
 
         checkPermissions();
@@ -114,7 +115,7 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
                 Logger.d("selected gpu mode");
                 break;
             default:
-                mIsCpuMode = true;
+                mIsCpuMode = false;
         }
     }
 
@@ -150,7 +151,7 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
 
     @Override
     public void onValueChange(NumberPicker picker, int oldVal, int newVal) {
-        Logger.i("Sample size changed from %s to %s", mSampleSizes[oldVal], mSampleSizes[newVal]);
+//        Logger.i("Sample size changed from %s to %s", mSampleSizes[oldVal], mSampleSizes[newVal]);
         mSampleSize = Integer.parseInt(mSampleSizes[newVal]);
     }
 
@@ -204,6 +205,10 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
             try {
                 lstmModel = new Model(dataRootPath, mIsCpuMode);
                 publishProgress("0", "model loaded");
+                if (!mIsCpuMode) {
+                    RenderScript rs = RenderScript.create(getApplicationContext());
+                    lstmModel.setRs(rs);
+                }
             } catch (IOException e) {
                 Logger.e("model cannot be created");
                 e.printStackTrace();
