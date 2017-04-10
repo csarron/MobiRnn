@@ -29,6 +29,22 @@ float RS_KERNEL set_zeros(uint32_t x, uint32_t y){
     return 0.0f;
 }
 
+static void print(rs_allocation mat){
+    const uint32_t dimX =  rsAllocationGetDimX(mat);
+    const uint32_t dimY =  rsAllocationGetDimY(mat);
+    rsDebug("dimX: ", dimX);
+    rsDebug("dimY: ", dimY);
+    for (uint32_t x = 0; x < dimX; x++){
+        for (uint32_t y = 0; y < dimY; y++){
+            float* a = (float*) rsGetElementAt(mat, x, y);
+            rsDebug("x: ", x);
+            rsDebug("y: ", y);
+            rsDebug("mat: ", (*a));
+         }     
+    }
+}
+
+
 uint32_t outputDims;
 
 rs_allocation w_out;
@@ -50,30 +66,51 @@ float RS_KERNEL output_transform(uint32_t x){
 
 rs_allocation c;
 rs_allocation h;
-const uint32_t state_size = 2;
-rs_allocation state;
-rs_allocation input_step;
 
-void init(){
-    rsDebug("init called", 0);
+rs_allocation input_concat;
+rs_allocation layer_weights;
+rs_allocation layer_biases;
+rs_allocation linear_result;
+
+float RS_KERNEL linear_map(uint32_t x){
+    float sum = 0.0f;
+    for (uint32_t c = 0; c < hiddenUnites * 2; c++) {
+        float* a = (float*) rsGetElementAt(input_concat, c, 1);
+        float* b = (float*) rsGetElementAt(layer_weights, x, c);
+        sum += (*a) * (*b);
+    }
+    float* valB = (float*) rsGetElementAt(layer_biases, x);
+    sum += (*valB);
+    return sum;
 }
 
 void predict(){
     rsForEach(input_transform, inputs);
     c = rsCreateAllocation_float(hiddenUnites);
     h = rsCreateAllocation_float(hiddenUnites);
-    state = rsCreateAllocation_float(hiddenUnites, state_size);
+
+    input_concat = rsCreateAllocation_float(hiddenUnites * 2, 1);
+    layer_weights = rsCreateAllocation_float(hiddenUnites * 4, hiddenUnites * 2);
+    layer_biases = rsCreateAllocation_float(hiddenUnites * 4, 1);
+    linear_result = rsCreateAllocation_float(hiddenUnites * 4, 1);
+
     outputs = rsCreateAllocation_float(hiddenUnites, timeSteps);
-    for (uint32_t j = 0; j < layerSize; j++) {
+    rsForEach(set_zeros, outputs);
+    for (uint32_t j = 0; j < 1; j++) {
         rsForEach(set_zeros, c);
         rsForEach(set_zeros, h);
-        // for (uint32_t k = 0; k < hiddenUnites; k++) {
-        //     rsDebug("c=", *((float*) rsGetElementAt(c, k)));
-        //     rsDebug("h=", *((float*) rsGetElementAt(h, k)));
-        // }
-        for (uint32_t k = 0; k < timeSteps; k++) {
+        for (uint32_t k = 0; k < hiddenUnites; k++) {
+            rsDebug("c=", *((float*) rsGetElementAt(c, k)));
+            rsDebug("h=", *((float*) rsGetElementAt(h, k)));
+        }
+        for (uint32_t k = 0; k < 1; k++) {
+            rsAllocationCopy1DRange(input_concat, 0, 0, hiddenUnites, inputs, 0, 0);
+            rsAllocationCopy1DRange(input_concat, hiddenUnites, 0, hiddenUnites, h, 0, 0);
+            // print(input_concat);
+            rsAllocationCopy1DRange(layer_weights, hiddenUnites, 0, hiddenUnites, h, 0, 0);
 
-
+            rsForEach(linear_map, linear_result);
+            print(linear_result);
         }
     }
 
