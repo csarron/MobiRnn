@@ -38,7 +38,7 @@ public class Util {
     }
 
     public static String getTimestampString() {
-        SimpleDateFormat df = new SimpleDateFormat("HH:mm:ss.SSS", Locale.US);
+        SimpleDateFormat df = new SimpleDateFormat("mm:ss.SSS", Locale.US);
         return df.format(new Date());
     }
 

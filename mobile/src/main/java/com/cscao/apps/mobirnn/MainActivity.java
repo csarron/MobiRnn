@@ -256,8 +256,8 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
                     accuracy = (float) (correct * 100.0 / (i + 1));
                 }
                 String progress = String.format(Locale.US,
-                        "case: %03d, label: %d, %s",
-                        indices[i], predictedLabels[i], isCorrect ? "right" : "wrong");
+                        "case:%03d,output:%d,label:%d,%s",
+                        indices[i], predictedLabels[i], labels[i], isCorrect ? "right" : "wrong");
                 Logger.d(progress);
                 publishProgress("" + (i + 1), progress);
 
