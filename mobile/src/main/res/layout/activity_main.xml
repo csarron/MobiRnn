@@ -102,7 +102,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="bottom"
-        android:maxLines="15"
+        android:maxLines="18"
+        android:typeface="monospace"
+        android:textSize="12sp"
         android:scrollbars="vertical" />
 
     <TextView

@@ -215,7 +215,7 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
             int[] indices = new int[0];
             float[][][] inputs = new float[0][][];
             try {
-                publishProgress("0", "begin parsing input data...");
+                publishProgress("0", "loading input data...");
                 inputs = getInputData(dataRootPath);
                 indices = getIndices(inputs.length, mSampleSize);
                 inputs = getSampledInputs(inputs, indices);
@@ -256,7 +256,7 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
                     accuracy = (float) (correct * 100.0 / (i + 1));
                 }
                 String progress = String.format(Locale.US,
-                        "case: %04d, label: %d, %s",
+                        "case: %03d, label: %d, %s",
                         indices[i], predictedLabels[i], isCorrect ? "right" : "wrong");
                 Logger.d(progress);
                 publishProgress("" + (i + 1), progress);
@@ -275,7 +275,7 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
             mStatusTextView.append(mode);
 
             String info = String.format(Locale.US,
-                    "%s: processing model and input data...\n", getTimestampString());
+                    "%s: loading model...\n", getTimestampString());
             mStatusTextView.append(info);
         }
 
