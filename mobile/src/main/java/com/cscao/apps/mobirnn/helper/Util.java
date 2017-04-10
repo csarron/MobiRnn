@@ -50,7 +50,7 @@ public class Util {
         final float[][][] inputs;
         final Kryo kryo = new Kryo();
         kryo.register(float[][][].class);
-        final File dataBinFile = new File(getDataPath() + File.separator + "data.bin");
+        final File dataBinFile = new File(getDataPath() + File.separator + "data-small.bin");
         if (dataBinFile.exists()) {
             Logger.i("begin reading input data bin: %s", dataBinFile.getAbsolutePath());
             Input input = new Input(new FileInputStream(dataBinFile));

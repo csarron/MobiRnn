@@ -48,7 +48,7 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
     private boolean mSeedChanged;
     private boolean mIsCpuMode = true;
     private int mSampleSize;
-    final String[] mSampleSizes = {"10", "50", "100", "200", "500", "1000"};
+    final String[] mSampleSizes = {"10", "50", "100", "200", "500"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

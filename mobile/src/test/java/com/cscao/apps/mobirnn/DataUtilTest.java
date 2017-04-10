@@ -7,8 +7,6 @@ import com.cscao.apps.mobirnn.model.DataUtil;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import com.esotericsoftware.kryo.io.UnsafeMemoryInput;
-import com.esotericsoftware.kryo.io.UnsafeMemoryOutput;
 
 import org.junit.Test;
 
@@ -76,14 +74,14 @@ public class DataUtilTest {
 
         final Kryo kryo = new Kryo();
         kryo.register(float[][][].class);
-        final File dataBinFile = new File("data.bin");
+        final File dataBinFile = new File("data-small.bin");
         if (dataBinFile.exists()) {
-            Input input = new UnsafeMemoryInput(new FileInputStream(dataBinFile));
+            Input input = new Input(new FileInputStream(dataBinFile));
             inputs = kryo.readObject(input, float[][][].class);
             input.close();
         } else {
             inputs = DataUtil.parseInputData(inputFilePath);
-            Output output = new UnsafeMemoryOutput(new FileOutputStream(dataBinFile));
+            Output output = new Output(new FileOutputStream(dataBinFile));
 
             kryo.writeObject(output, inputs);
             output.close();
