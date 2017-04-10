@@ -2,17 +2,17 @@ package com.cscao.apps.mobirnn.model;
 
 import static com.cscao.apps.mobirnn.model.DataUtil.alter2Dto1D;
 
-import android.renderscript.Allocation;
-import android.renderscript.Element;
-import android.renderscript.RenderScript;
-import android.renderscript.Type;
+import android.support.v8.renderscript.Allocation;
+import android.support.v8.renderscript.Element;
+import android.support.v8.renderscript.RenderScript;
+import android.support.v8.renderscript.Type;
 
 import com.cscao.apps.mobirnn.ScriptC_main;
+import com.orhanobut.logger.Logger;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.Arrays;
 
 /**
  * Created by qqcao on 4/5/17Wednesday.
@@ -152,10 +152,17 @@ public class Model {
 
 //        float[][] a = {{1, 2, 3}, {4, 5, 6}};
 //        float[][] b = {{10, 20, 30, 40}, {50, 60, 70, 80}, {90, 100, 110, 120}};
+//        float[] c = {7,8,9,10};
 //        float[][] c1 = {{380, 440, 500, 560}, {830, 980, 1130, 1280}};
+//        float[][] c2 = {{387, 448, 509, 570}, {837, 988, 1139, 1290}};
+//        x =a;
+//        w_in = b;
+//        b_in =c;
+//        hidden_units = 4;
         int timeSteps = x.length; // dimY
         int inDim = x[0].length; // dimX
         int outDim = w_out[0].length;
+        Logger.i("inDim:%s, timeSteps:%s, hiddenUnits:%s", inDim, timeSteps, hidden_units);
         float[] convertedX = alter2Dto1D(x);
         float[] convertedWIn = alter2Dto1D(w_in);
         float[] convertedWOut = alter2Dto1D(w_out);
@@ -165,6 +172,7 @@ public class Model {
         scriptC_main.set_inputDims(inDim);
         scriptC_main.set_outputDims(outDim);
         scriptC_main.set_hiddenUnites(hidden_units);
+        scriptC_main.set_layerSize(layerSize);
 
         // initialize input allocation
         Type inRawType = Type.createXY(mRs, Element.F32(mRs), inDim, timeSteps);
@@ -173,7 +181,7 @@ public class Model {
         scriptC_main.set_inputRaw(inputRawAlloc);
 
         // initialize model parameters allocation
-        Type wInType = Type.createXY(mRs, Element.F32(mRs), inDim, hidden_units);
+        Type wInType = Type.createXY(mRs, Element.F32(mRs), hidden_units, inDim);
         Allocation wInAlloc = Allocation.createTyped(mRs, wInType);
         wInAlloc.copyFrom(convertedWIn);
         scriptC_main.set_w_in(wInAlloc);
@@ -191,17 +199,22 @@ public class Model {
         bOutAlloc.copyFrom(b_out);
         scriptC_main.set_b_out(bOutAlloc);
 
-        Type inputsType = Type.createXY(mRs, Element.F32(mRs), hidden_units, timeSteps);
-        Allocation inputsAlloc = Allocation.createTyped(mRs, inputsType);
-        float[] inputs = new float[timeSteps * hidden_units];
+        Type cellDataType = Type.createXY(mRs, Element.F32(mRs), hidden_units, timeSteps);
+        Allocation inputsAlloc = Allocation.createTyped(mRs, cellDataType);
+        scriptC_main.set_inputs(inputsAlloc);
+//        float[] inputs = new float[timeSteps * hidden_units];
+//        Allocation outputsAlloc = Allocation.createTyped(mRs, cellDataType);
+//        scriptC_main.set_outputs(outputsAlloc);
+//        float[] outputs = new float[timeSteps * hidden_units];
+
+        scriptC_main.invoke_predict();
 //        scriptC_main.set_matAB(inputsAlloc);
 //        scriptC_main.set_matA(inputRawAlloc);
 //        scriptC_main.set_matB(wInAlloc);
 //        scriptC_main.set_sameDim(inDim);
-        scriptC_main.forEach_input_transform(inputsAlloc);
-
-        inputsAlloc.copyTo(inputs);
-        System.out.println("inputs: " + Arrays.toString(inputs));
+//        scriptC_main.forEach_input_transform(inputsAlloc);
+//        inputsAlloc.copyTo(inputs);
+//        System.out.println("inputs: " + Arrays.toString(inputs));
 
         // initialize output label allocation
         Allocation labelProbAlloc = Allocation.createSized(mRs, Element.F32(mRs), outDim);
