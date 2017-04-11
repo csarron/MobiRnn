@@ -79,11 +79,11 @@ public class DataUtil {
     }
 
     public static float[] alter2Dto1D(float[][] x) {
-        int timeSteps = x.length;
-        int inDim = x[0].length;
-        float[] converted = new float[timeSteps * inDim];
-        for (int i = 0; i < timeSteps; i++) {
-            System.arraycopy(x[i], 0, converted, i * inDim, inDim);
+        int X = x.length;
+        int Y = x[0].length;
+        float[] converted = new float[X * Y];
+        for (int i = 0; i < X; i++) {
+            System.arraycopy(x[i], 0, converted, i * Y, Y);
         }
         return converted;
     }

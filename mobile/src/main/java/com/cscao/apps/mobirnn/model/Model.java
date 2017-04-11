@@ -33,6 +33,10 @@ public class Model {
     private int hidden_units;
     private boolean isModeCpu = true;
     private RenderScript mRs;
+    private float[] convertedWIn;
+    private float[] convertedWOut;
+    private float[] convertedWeights;
+    private float[] convertedBiases;
 
     public Model(String modelFolder, boolean isModeCpu) throws IOException {
         this(modelFolder);
@@ -87,6 +91,10 @@ public class Model {
         this.w_out = w_out;
         this.b_in = b_in;
         this.b_out = b_out;
+        convertedWIn = alter2Dto1D(w_in);
+        convertedWOut = alter2Dto1D(w_out);
+        convertedWeights = alter3Dto1D(weights);
+        convertedBiases = alter2Dto1D(biases);
     }
 
     private float[][] calcCellOneStep(float[] in_, float[] c_, float[] h_, int layer) {
@@ -146,7 +154,7 @@ public class Model {
     }
 
     private int predictOnCpu(float[][] x) {
-        int timeSteps = x.length;
+//        int timeSteps = x.length;
 
 //        float[][] outputs = new float[timeSteps][];
         x = DataUtil.relu(Matrix.addVec(Matrix.multiply(x, w_in), b_in));
@@ -199,10 +207,6 @@ public class Model {
         int outDim = w_out[0].length;
 //        Logger.i("inDim:%s, timeSteps:%s, hiddenUnits:%s", inDim, timeSteps, hidden_units);
         float[] convertedX = alter2Dto1D(x);
-        float[] convertedWIn = alter2Dto1D(w_in);
-        float[] convertedWOut = alter2Dto1D(w_out);
-        float[] convertedWeights = alter3Dto1D(weights);
-        float[] convertedBiases = alter2Dto1D(biases);
 
         ScriptC_main scriptC_main = new ScriptC_main(mRs);
         scriptC_main.set_timeSteps(timeSteps);
@@ -258,9 +262,7 @@ public class Model {
 
         // copy result back
         labelProbAlloc.copyTo(labelProb);
-        int label = DataUtil.argmax(labelProb) + 1;
-        System.out.println(label);
-        return label;
+        return DataUtil.argmax(labelProb) + 1;
     }
 
     public void setRs(RenderScript rs) {
