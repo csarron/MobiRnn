@@ -3,10 +3,10 @@ package com.cscao.apps.mobirnn.model;
 import static com.cscao.apps.mobirnn.model.DataUtil.alter2Dto1D;
 import static com.cscao.apps.mobirnn.model.DataUtil.alter3Dto1D;
 
-import android.support.v8.renderscript.Allocation;
-import android.support.v8.renderscript.Element;
-import android.support.v8.renderscript.RenderScript;
-import android.support.v8.renderscript.Type;
+import android.renderscript.Allocation;
+import android.renderscript.Element;
+import android.renderscript.RenderScript;
+import android.renderscript.Type;
 
 import com.cscao.apps.mobirnn.ScriptC_main;
 import com.orhanobut.logger.Logger;
@@ -38,6 +38,17 @@ public class Model {
     private float[] convertedWOut;
     private float[] convertedWeights;
     private float[] convertedBiases;
+    private int inDim;
+    private int outDim;
+    private ScriptC_main scriptC_main;
+    private Allocation cAlloc;
+    private Allocation hAlloc;
+    private Allocation inputConcatAlloc;
+    private Allocation linearResultAlloc;
+    private Allocation iAlloc;
+    private Allocation jAlloc;
+    private Allocation fAlloc;
+    private Allocation oAlloc;
 
     public Model(String modelFolder, boolean isModeCpu) throws IOException {
         this(modelFolder);
@@ -96,6 +107,8 @@ public class Model {
         convertedWOut = alter2Dto1D(w_out);
         convertedWeights = alter3Dto1D(weights);
         convertedBiases = alter2Dto1D(biases);
+        inDim = w_in.length;
+        outDim = b_out.length;
     }
 
     private float[][] calcCellOneStep(float[] in_, float[] c_, float[] h_, int layer) {
@@ -192,37 +205,77 @@ public class Model {
 
     private int predictOnGpu(float[][] x) {
         if (mRs == null) {
-            return 0;
+            return -1;
         }
 
-//        float[][] a = {{1, 2, 3}, {4, 5, 6}};
-//        float[][] b = {{10, 20, 30, 40}, {50, 60, 70, 80}, {90, 100, 110, 120}};
-//        float[] c = {7,8,9,10};
-//        float[][] c1 = {{380, 440, 500, 560}, {830, 980, 1130, 1280}};
-//        float[][] c2 = {{387, 448, 509, 570}, {837, 988, 1139, 1290}};
-//        x =a;
-//        w_in = b;
-//        b_in =c;
-//        hidden_units = 4;
-        int timeSteps = x.length; // dimY
-        int inDim = x[0].length; // dimX
-        int outDim = w_out[0].length;
-//        Logger.i("inDim:%s, timeSteps:%s, hiddenUnits:%s", inDim, timeSteps, hidden_units);
+        int timeSteps = x.length;
         float[] convertedX = alter2Dto1D(x);
 
-        ScriptC_main scriptC_main = new ScriptC_main(mRs);
         scriptC_main.set_timeSteps(timeSteps);
         scriptC_main.set_inputDims(inDim);
         scriptC_main.set_hiddenUnites(hidden_units);
         scriptC_main.set_layerSize(layerSize);
 
-        // initialize input allocation
+        // initialize input raw data allocation
         Type inRawType = Type.createXY(mRs, Element.F32(mRs), inDim, timeSteps);
         Allocation inputRawAlloc = Allocation.createTyped(mRs, inRawType);
         inputRawAlloc.copyFrom(convertedX);
         scriptC_main.set_inputRaw(inputRawAlloc);
 
-        // initialize model parameters allocation
+        // initialize activated input data allocation
+        Type cellDataType = Type.createXY(mRs, Element.F32(mRs), hidden_units, timeSteps);
+        Allocation inputsAlloc = Allocation.createTyped(mRs, cellDataType);
+        scriptC_main.set_inputs(inputsAlloc);
+
+        // initialize model parameters(weights and biases) allocation
+        initializeParamsAllocation();
+
+        allocIntermediateVariables();
+
+        // initialize label probability output allocation
+        Allocation labelProbAlloc = Allocation.createSized(mRs, Element.F32(mRs), outDim);
+        scriptC_main.set_label_prob(labelProbAlloc);
+
+        // begin model forward pass computation
+        long start = System.currentTimeMillis();
+
+        scriptC_main.forEach_input_transform(inputsAlloc);
+        for (int i = 0; i < layerSize; i++) {
+            scriptC_main.forEach_set_zeros(cAlloc);
+            scriptC_main.forEach_set_zeros(hAlloc);
+            scriptC_main.set_current_layer(i);
+            for (int j = 0; j < timeSteps; j++) {
+                scriptC_main.set_current_step(j);
+
+                scriptC_main.forEach_concat_in(inputsAlloc);
+                scriptC_main.forEach_concat_h(hAlloc);
+
+                scriptC_main.forEach_linear_map(linearResultAlloc);
+
+                scriptC_main.forEach_get_i(iAlloc);
+                scriptC_main.forEach_get_j(jAlloc);
+                scriptC_main.forEach_get_f(fAlloc);
+                scriptC_main.forEach_get_o(oAlloc);
+
+                scriptC_main.forEach_pointwise_c(cAlloc);
+                scriptC_main.forEach_pointwise_h(hAlloc);
+
+                scriptC_main.forEach_update_input(hAlloc);
+            }
+        }
+        scriptC_main.forEach_output_transform(labelProbAlloc);
+        mRs.finish();
+
+        long end = System.currentTimeMillis();
+
+        // copy result back
+        float[] labelProb = new float[outDim];
+        labelProbAlloc.copyTo(labelProb);
+        Logger.i("invoke time: %s", (end - start));
+        return DataUtil.argmax(labelProb) + 1;
+    }
+
+    private void initializeParamsAllocation() {
         Type wInType = Type.createXY(mRs, Element.F32(mRs), hidden_units, inDim);
         Allocation wInAlloc = Allocation.createTyped(mRs, wInType);
         wInAlloc.copyFrom(convertedWIn);
@@ -241,12 +294,8 @@ public class Model {
         bOutAlloc.copyFrom(b_out);
         scriptC_main.set_b_out(bOutAlloc);
 
-        Type cellDataType = Type.createXY(mRs, Element.F32(mRs), hidden_units, timeSteps);
-        Allocation inputsAlloc = Allocation.createTyped(mRs, cellDataType);
-        scriptC_main.set_inputs(inputsAlloc);
-
-        Type weightType = Type.createXYZ(mRs, Element.F32(mRs), hidden_units * 4, hidden_units * 2,
-                layerSize);
+        Type weightType = Type.createXYZ(mRs, Element.F32(mRs),
+                hidden_units * 4, hidden_units * 2, layerSize);
         Allocation weightAlloc = Allocation.createTyped(mRs, weightType);
         weightAlloc.copyFrom(convertedWeights);
         scriptC_main.set_weights(weightAlloc);
@@ -255,23 +304,39 @@ public class Model {
         Allocation biasAlloc = Allocation.createTyped(mRs, biasType);
         biasAlloc.copyFrom(convertedBiases);
         scriptC_main.set_biases(biasAlloc);
-
-        // initialize output label allocation
-        Allocation labelProbAlloc = Allocation.createSized(mRs, Element.F32(mRs), outDim);
-        scriptC_main.set_label_prob(labelProbAlloc);
-        float[] labelProb = new float[outDim];
-        long start = System.currentTimeMillis();
-        scriptC_main.invoke_predict();
-        long end = System.currentTimeMillis();
-
-        // copy result back
-        labelProbAlloc.copyTo(labelProb);
-        mRs.finish();
-        Logger.i("invoke time: %s", (end - start));
-        return DataUtil.argmax(labelProb) + 1;
     }
+
+    private void allocIntermediateVariables() {
+        cAlloc = Allocation.createSized(mRs, Element.F32(mRs), hidden_units);
+        scriptC_main.set_c(cAlloc);
+
+        hAlloc = Allocation.createSized(mRs, Element.F32(mRs), hidden_units);
+        scriptC_main.set_h(hAlloc);
+
+        inputConcatAlloc = Allocation.createSized(mRs, Element.F32(mRs),
+                hidden_units * 2);
+        scriptC_main.set_input_concat(inputConcatAlloc);
+
+        linearResultAlloc = Allocation.createSized(mRs, Element.F32(mRs),
+                hidden_units * 4);
+        scriptC_main.set_linear_result(linearResultAlloc);
+
+        iAlloc = Allocation.createSized(mRs, Element.F32(mRs), hidden_units);
+        scriptC_main.set_i_gate(iAlloc);
+
+        jAlloc = Allocation.createSized(mRs, Element.F32(mRs), hidden_units);
+        scriptC_main.set_j_val(jAlloc);
+
+        fAlloc = Allocation.createSized(mRs, Element.F32(mRs), hidden_units);
+        scriptC_main.set_f_gate(fAlloc);
+
+        oAlloc = Allocation.createSized(mRs, Element.F32(mRs), hidden_units);
+        scriptC_main.set_o_gate(oAlloc);
+    }
+
 
     public void setRs(RenderScript rs) {
         mRs = rs;
+        scriptC_main = new ScriptC_main(rs);
     }
 }

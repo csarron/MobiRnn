@@ -12,7 +12,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v8.renderscript.RenderScript;
+import android.renderscript.RenderScript;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.util.Pair;
@@ -202,7 +202,7 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
                 lstmModel = new Model(dataRootPath, mIsCpuMode);
                 publishProgress("0", "model loaded");
                 if (!mIsCpuMode) {
-                    RenderScript rs = RenderScript.create(getApplicationContext());
+                    RenderScript rs = RenderScript.create(getApplicationContext(), RenderScript.ContextType.DEBUG);
                     lstmModel.setRs(rs);
                 }
             } catch (IOException e) {
