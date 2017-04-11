@@ -10,10 +10,10 @@ import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.SystemClock;
-import android.support.v8.renderscript.RenderScript;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v8.renderscript.RenderScript;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.util.Pair;
@@ -29,7 +29,6 @@ import com.cscao.apps.mobirnn.model.Model;
 import com.orhanobut.logger.Logger;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Locale;
 import java.util.Random;
 
@@ -193,7 +192,7 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
                 indices[i] = r.nextInt(high);
             }
 
-            Logger.d("indices: " + Arrays.toString(indices));
+//            Logger.d("indices: " + Arrays.toString(indices));
             return indices;
         }
 

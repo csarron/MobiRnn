@@ -9,7 +9,6 @@ import android.support.v8.renderscript.RenderScript;
 import android.support.v8.renderscript.Type;
 
 import com.cscao.apps.mobirnn.ScriptC_main;
-import com.orhanobut.logger.Logger;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -198,7 +197,7 @@ public class Model {
         int timeSteps = x.length; // dimY
         int inDim = x[0].length; // dimX
         int outDim = w_out[0].length;
-        Logger.i("inDim:%s, timeSteps:%s, hiddenUnits:%s", inDim, timeSteps, hidden_units);
+//        Logger.i("inDim:%s, timeSteps:%s, hiddenUnits:%s", inDim, timeSteps, hidden_units);
         float[] convertedX = alter2Dto1D(x);
         float[] convertedWIn = alter2Dto1D(w_in);
         float[] convertedWOut = alter2Dto1D(w_out);
