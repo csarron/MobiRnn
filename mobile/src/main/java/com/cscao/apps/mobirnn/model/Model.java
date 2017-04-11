@@ -1,6 +1,5 @@
 package com.cscao.apps.mobirnn.model;
 
-import static com.cscao.apps.mobirnn.helper.Util.getDataPath;
 import static com.cscao.apps.mobirnn.model.DataUtil.alter2Dto1D;
 import static com.cscao.apps.mobirnn.model.DataUtil.alter3Dto1D;
 
@@ -11,8 +10,6 @@ import android.support.v8.renderscript.Type;
 
 import com.cscao.apps.mobirnn.ScriptC_main;
 import com.orhanobut.logger.Logger;
-
-import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -127,14 +124,14 @@ public class Model {
             c_[k] = c_[k] * DataUtil.sigmoid(f[k] + 1) + DataUtil.sigmoid(i[k]) * DataUtil.tanh(j[k]);
             h_[k] = DataUtil.tanh(c_[k]) * DataUtil.sigmoid(o[k]);
         }
-        try {
-            File c_File = new File(getDataPath() + File.separator + "c_.log");
-            FileUtils.write(c_File, Arrays.toString(c_) + "\n", false);
-            File h_File = new File(getDataPath() + File.separator + "h_.log");
-            FileUtils.write(h_File, Arrays.toString(h_) + "\n", false);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            File c_File = new File(getDataPath() + File.separator + "c_.log");
+//            FileUtils.write(c_File, Arrays.toString(c_) + "\n", false);
+//            File h_File = new File(getDataPath() + File.separator + "h_.log");
+//            FileUtils.write(h_File, Arrays.toString(h_) + "\n", false);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
         float[][] state = new float[2][];
         state[0] = c_;
         state[1] = h_;
@@ -152,7 +149,7 @@ public class Model {
     private int predictOnCpu(float[][] x) {
         int timeSteps = x.length;
 
-        float[][] outputs = new float[timeSteps][];
+//        float[][] outputs = new float[timeSteps][];
         x = DataUtil.relu(Matrix.addVec(Matrix.multiply(x, w_in), b_in));
 //        try {
 //            for (float[] aX : x) {
@@ -162,24 +159,25 @@ public class Model {
 //        } catch (IOException e) {
 //            e.printStackTrace();
 //        }
+        float[] c = new float[hidden_units];
+        float[] h = new float[hidden_units];
         for (int j = 0; j < layerSize; j++) {
-            float[] c = new float[hidden_units];
-            float[] h = new float[hidden_units];
-
-            for (int k = 0; k < timeSteps; k++) {
-                float[][] state = calcCellOneStep(x[k], c, h, j);
+            Arrays.fill(c, 0);
+            Arrays.fill(h, 0);
+            for (float[] aX : x) {
+                float[][] state = calcCellOneStep(aX, c, h, j);
                 c = state[0];
                 h = state[1];
-                System.arraycopy(h, 0, x[k], 0, hidden_units);
-                outputs[k] = new float[hidden_units];
-                System.arraycopy(h, 0, outputs[k], 0, hidden_units);
+                System.arraycopy(h, 0, aX, 0, hidden_units);
+//                outputs[k] = new float[hidden_units];
+//                System.arraycopy(h, 0, outputs[k], 0, hidden_units);
 //                x[k] = h;
 //                outputs[k] = h;
             }
         }
 
-        float[] outProb = Matrix.vecAddVec(Matrix.vecMulMat(outputs[timeSteps - 1], w_out), b_out);
-        System.out.println("out:" + Arrays.toString(outProb).replaceAll("[\\[ | \\] | ,]", " "));
+        float[] outProb = Matrix.vecAddVec(Matrix.vecMulMat(h, w_out), b_out);
+//        System.out.println("out:" + Arrays.toString(outProb).replaceAll("[\\[ | \\] | ,]", " "));
         return DataUtil.argmax(outProb) + 1;
     }
 
