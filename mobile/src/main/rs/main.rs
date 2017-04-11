@@ -11,12 +11,12 @@ rs_allocation b_in;
 float RS_KERNEL input_transform(uint32_t x, uint32_t y){
     float sum = 0.0f;
     for (uint32_t c = 0; c < inputDims; c++) {
-        float* a = (float*) rsGetElementAt(inputRaw, c, y);
-        float* b = (float*) rsGetElementAt(w_in, x, c);
-        sum += (*a) * (*b);
+        float a = rsGetElementAt_float(inputRaw, c, y);
+        float b = rsGetElementAt_float(w_in, x, c);
+        sum += a * b;
     }
-    float* valB = (float*) rsGetElementAt(b_in, x);
-    sum += (*valB);
+    float valB = rsGetElementAt_float(b_in, x);
+    sum += valB;
     return fmax(sum, 0.0f);// relu
 }
 
@@ -38,10 +38,10 @@ static void print(rs_allocation mat){
     rsDebug("dimY: ", dimY);
     for (uint32_t x = 0; x < dimX; x++){
         for (uint32_t y = 0; y < dimY; y++){
-            float* a = (float*) rsGetElementAt(mat, x, y);
+            float a = rsGetElementAt_float(mat, x, y);
             rsDebug("x: ", x);
             rsDebug("y: ", y);
-            rsDebug("mat: ", (*a));
+            rsDebug("mat: ", a);
          }     
     }
 }
@@ -57,7 +57,7 @@ uint32_t current_layer;
 uint32_t current_step;
 
 float RS_KERNEL concat_in(uint32_t x){
-    return *((float*) rsGetElementAt(inputs, x, current_step));
+    return rsGetElementAt_float(inputs, x, current_step);
 }
 
 void RS_KERNEL concat_h(float in, uint32_t x){
@@ -68,16 +68,16 @@ float RS_KERNEL linear_map(uint32_t x){
     float sum = 0.0f;
     //rsDebug("current_layer=",  current_layer);
     for (uint32_t c = 0; c < hiddenUnites * 2; c++) {
-        float* a = (float*) rsGetElementAt(input_concat, c, 0); // input_concat is dimY is 1
-        float* b = (float*) rsGetElementAt(weights, x, c, current_layer);
+        float a = rsGetElementAt_float(input_concat, c, 0); // input_concat is dimY is 1
+        float b = rsGetElementAt_float(weights, x, c, current_layer);
         //rsDebug("a=",  (*a));
         //rsDebug("b=",  (*b));
-        sum += (*a) * (*b);
+        sum += a * b;
         //rsDebug("sum=",  sum);
     }
 
-    float* valB = (float*) rsGetElementAt(biases, x, current_layer);
-    sum += (*valB);
+    float valB = rsGetElementAt_float(biases, x, current_layer);
+    sum += valB;
     return sum;
 }
 
@@ -87,19 +87,19 @@ rs_allocation f_gate;
 rs_allocation o_gate;
 
 float RS_KERNEL get_i(uint32_t x){
-    return *((float*) rsGetElementAt(linear_result, x, 0));
+    return rsGetElementAt_float(linear_result, x, 0);
 }
 
 float RS_KERNEL get_j(uint32_t x){
-    return *((float*) rsGetElementAt(linear_result, hiddenUnites + x, 0));
+    return rsGetElementAt_float(linear_result, hiddenUnites + x, 0);
 }
 
 float RS_KERNEL get_f(uint32_t x){
-    return *((float*) rsGetElementAt(linear_result, hiddenUnites * 2 + x, 0));
+    return rsGetElementAt_float(linear_result, hiddenUnites * 2 + x, 0);
 }
 
 float RS_KERNEL get_o(uint32_t x){
-    return *((float*) rsGetElementAt(linear_result, hiddenUnites * 3 + x, 0));
+    return rsGetElementAt_float(linear_result, hiddenUnites * 3 + x, 0);
 }
 
 static inline float sigmoid(float x){
@@ -107,10 +107,10 @@ static inline float sigmoid(float x){
 }
 
 float RS_KERNEL pointwise_c(uint32_t x){
-    float cVal = *((float*) rsGetElementAt(c, x));
-    float fVal = *((float*) rsGetElementAt(f_gate, x));
-    float iVal = *((float*) rsGetElementAt(i_gate, x));
-    float jVal = *((float*) rsGetElementAt(j_val, x));
+    float cVal = rsGetElementAt_float(c, x);
+    float fVal = rsGetElementAt_float(f_gate, x);
+    float iVal = rsGetElementAt_float(i_gate, x);
+    float jVal = rsGetElementAt_float(j_val, x);
 
     float newC = cVal * sigmoid(fVal + 1) + sigmoid(iVal) * tanh(jVal);
     //rsDebug("newC:", newC);
@@ -118,8 +118,8 @@ float RS_KERNEL pointwise_c(uint32_t x){
 }
 
 float RS_KERNEL pointwise_h(uint32_t x){
-    float cVal = *((float*) rsGetElementAt(c, x));
-    float oVal = *((float*) rsGetElementAt(o_gate, x));
+    float cVal = rsGetElementAt_float(c, x);
+    float oVal = rsGetElementAt_float(o_gate, x);
 
     return tanh(cVal) * sigmoid(oVal);
 }
@@ -140,12 +140,12 @@ rs_allocation label_prob;
 float RS_KERNEL output_transform(uint32_t x){
     float sum = 0.0f;
     for (uint32_t c = 0; c < hiddenUnites; c++) {
-        float* a = (float*) rsGetElementAt(h, c);
-        float* b = (float*) rsGetElementAt(w_out, x, c);
-        sum += (*a) * (*b);
+        float a = rsGetElementAt_float(h, c);
+        float b = rsGetElementAt_float(w_out, x, c);
+        sum += a * b;
     }
-    float* valB = (float*) rsGetElementAt(b_out, x);
-    sum += (*valB);
+    float valB = rsGetElementAt_float(b_out, x);
+    sum += valB;
     return sum;
 }
 
@@ -189,10 +189,10 @@ void predict(){
             rsForEach(get_f, f_gate);
             rsForEach(get_o, o_gate);
             // for (uint32_t k = 0; k < hiddenUnites; k++) {
-            //     rsDebug("i_gate=", *((float*) rsGetElementAt(i_gate, k)));
-            //     rsDebug("j_val=", *((float*) rsGetElementAt(j_val, k)));
-            //     rsDebug("f_gate=", *((float*) rsGetElementAt(f_gate, k)));
-            //     rsDebug("o_gate=", *((float*) rsGetElementAt(o_gate, k)));
+            //     rsDebug("i_gate=", *(rsGetElementAt_float(i_gate, k)));
+            //     rsDebug("j_val=", *(rsGetElementAt_float(j_val, k)));
+            //     rsDebug("f_gate=", *(rsGetElementAt_float(f_gate, k)));
+            //     rsDebug("o_gate=", *(rsGetElementAt_float(o_gate, k)));
             // }
             rsForEach(pointwise_c, c);
             rsForEach(pointwise_h, h);
@@ -204,9 +204,9 @@ void predict(){
         }
     }
     // for (uint32_t k = 0; k < hiddenUnites; k++) {
-    //     // rsDebug("c=", *((float*) rsGetElementAt(c, k)));
-    //     rsDebug("h=", *((float*) rsGetElementAt(h, k)));
-    //     // rsDebug("outputs=", *((float*) rsGetElementAt(outputs, k)));
+    //     // rsDebug("c=", *(rsGetElementAt_float(c, k)));
+    //     rsDebug("h=", *(rsGetElementAt_float(h, k)));
+    //     // rsDebug("outputs=", *(rsGetElementAt_float(outputs, k)));
     // }
     rsForEach(output_transform, label_prob);
 }
@@ -223,8 +223,8 @@ void predict(){
 //   //rsDebug("sameDim=", sameDim);
 //   for (uint32_t c = 0; c < sameDim; c++) {
 //   // caution: x=m, y=n, x means number of columns, y means number of rows
-//     float* a = (float*) rsGetElementAt(matA, c, y);
-//     float* b = (float*) rsGetElementAt(matB, x, c);
+//     float* a = rsGetElementAt_float(matA, c, y);
+//     float* b = rsGetElementAt_float(matB, x, c);
 //     //rsDebug("a=", (*a));
 //     //rsDebug("b=", (*b));
 //     //rsDebug("c=", c);
@@ -238,8 +238,8 @@ void predict(){
 // // two matrix addition, or two vector addition
 // void matAdd(float *v_out, uint32_t x, uint32_t y) {
 //     float sum = 0.0f;
-//     float* valA = (float*) rsGetElementAt(matA, x, y);
-//     float* valB = (float*) rsGetElementAt(matB, x, y);
+//     float* valA = rsGetElementAt_float(matA, x, y);
+//     float* valB = rsGetElementAt_float(matB, x, y);
 //     sum = (*valA) * (*valB);
 //     rsSetElementAt_float(matAB, sum, x, y);
 // }
