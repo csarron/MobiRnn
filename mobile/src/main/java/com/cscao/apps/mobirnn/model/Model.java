@@ -9,6 +9,7 @@ import android.support.v8.renderscript.RenderScript;
 import android.support.v8.renderscript.Type;
 
 import com.cscao.apps.mobirnn.ScriptC_main;
+import com.orhanobut.logger.Logger;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -128,7 +129,8 @@ public class Model {
 //        }
         int size = c_.length;
         for (int k = 0; k < size; k++) {
-            c_[k] = c_[k] * DataUtil.sigmoid(f[k] + 1) + DataUtil.sigmoid(i[k]) * DataUtil.tanh(j[k]);
+            c_[k] = c_[k] * DataUtil.sigmoid(f[k] + 1) + DataUtil.sigmoid(i[k]) * DataUtil.tanh(
+                    j[k]);
             h_[k] = DataUtil.tanh(c_[k]) * DataUtil.sigmoid(o[k]);
         }
 //        try {
@@ -258,10 +260,14 @@ public class Model {
         Allocation labelProbAlloc = Allocation.createSized(mRs, Element.F32(mRs), outDim);
         scriptC_main.set_label_prob(labelProbAlloc);
         float[] labelProb = new float[outDim];
+        long start = System.currentTimeMillis();
         scriptC_main.invoke_predict();
+        long end = System.currentTimeMillis();
 
         // copy result back
         labelProbAlloc.copyTo(labelProb);
+        mRs.finish();
+        Logger.i("invoke time: %s", (end - start));
         return DataUtil.argmax(labelProb) + 1;
     }
 

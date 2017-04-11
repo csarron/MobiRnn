@@ -9,7 +9,6 @@ import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -45,7 +44,7 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
     private ProgressBar mResultProgress;
 
     private Task mTask;
-    private boolean mSeedChanged;
+    private long mSeed;
     private boolean mIsCpuMode = false;
     private int mSampleSize;
     final String[] mSampleSizes = {"1", "10", "50", "100", "200", "500"};
@@ -125,10 +124,8 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
             mTask = new Task();
             mTask.mIsCpuMode = mIsCpuMode;
             mTask.mSampleSize = mSampleSize;
-            if (mSeedChanged) {
-                mTask.mSeed = SystemClock.currentThreadTimeMillis();
-                mSeedChanged = false;
-            }
+            mTask.mSeed = mSeed;
+
             Logger.i("running task");
             mTask.execute(Util.getDataPath());
             Toast.makeText(this, R.string.run_model, Toast.LENGTH_SHORT).show();
@@ -155,7 +152,7 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
     }
 
     public void changeSeed(View view) {
-        mSeedChanged = true;
+        mSeed = System.currentTimeMillis();
         Toast.makeText(this, R.string.seed_changed, Toast.LENGTH_SHORT).show();
     }
 
