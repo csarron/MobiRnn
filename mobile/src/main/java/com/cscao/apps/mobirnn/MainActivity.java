@@ -49,7 +49,7 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
     private boolean mSeedChanged;
     private boolean mIsCpuMode = false;
     private int mSampleSize;
-    final String[] mSampleSizes = {"10", "50", "100", "200", "500"};
+    final String[] mSampleSizes = {"1", "10", "50", "100", "200", "500"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,7 +71,7 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
         picker.setMaxValue(mSampleSizes.length - 1);
         picker.setWrapSelectorWheel(true);
         picker.setValue(0);
-        mSampleSize = 10;
+        mSampleSize = 1;
         Logger.i("Sample size initial value: %s", mSampleSize);
 
         checkPermissions();

@@ -88,8 +88,23 @@ public class DataUtil {
         return converted;
     }
 
-    public static float sigmod(float x) {
-        return  1 / (1 + (float) Math.exp(-x));
+    public static float[] alter3Dto1D(float[][][] x) {
+        int X = x.length;
+        int Y = x[0].length;
+        int Z = x[0][0].length;
+
+        float[] converted = new float[X * Y * Z];
+        for (int i = 0; i < X; i++) {
+            float[][] layer = x[i];
+            for (int j = 0; j < Y; j++) {
+                System.arraycopy(layer[j], 0, converted, i * Y * Z + j * Z, Z);
+            }
+        }
+        return converted;
+    }
+
+    public static float sigmoid(float x) {
+        return 1 / (1 + (float) Math.exp(-x));
     }
 
     public static float tanh(float x) {

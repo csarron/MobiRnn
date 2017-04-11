@@ -1,6 +1,8 @@
 package com.cscao.apps.mobirnn.model;
 
+import static com.cscao.apps.mobirnn.helper.Util.getDataPath;
 import static com.cscao.apps.mobirnn.model.DataUtil.alter2Dto1D;
+import static com.cscao.apps.mobirnn.model.DataUtil.alter3Dto1D;
 
 import android.support.v8.renderscript.Allocation;
 import android.support.v8.renderscript.Element;
@@ -10,9 +12,12 @@ import android.support.v8.renderscript.Type;
 import com.cscao.apps.mobirnn.ScriptC_main;
 import com.orhanobut.logger.Logger;
 
+import org.apache.commons.io.FileUtils;
+
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * Created by qqcao on 4/5/17Wednesday.
@@ -93,17 +98,43 @@ public class Model {
         float[] concat = Matrix.concat(in_, h_);
         float[] linearResult = Matrix.vecAddVec(Matrix.vecMulMat(concat, this.weights[layer]),
                 this.biases[layer]);
+//        try {
+//            File concatFile = new File(getDataPath() + File.separator + "concat.log");
+//            FileUtils.write(concatFile, Arrays.toString(concat) + "\n", true);
+//            File lRFile = new File(getDataPath() + File.separator + "linearResult.log");
+//            FileUtils.write(lRFile, Arrays.toString(linearResult) + "\n", true);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
         float[] i = Matrix.split(linearResult, 4, 0);
         float[] j = Matrix.split(linearResult, 4, 1);
         float[] f = Matrix.split(linearResult, 4, 2);
         float[] o = Matrix.split(linearResult, 4, 3);
-
+//        try {
+//            File i_File = new File(getDataPath() + File.separator + "i.log");
+//            FileUtils.write(i_File, Arrays.toString(i) + "\n", true);
+//            File j_File = new File(getDataPath() + File.separator + "j.log");
+//            FileUtils.write(j_File, Arrays.toString(j) + "\n", true);
+//            File fFile = new File(getDataPath() + File.separator + "f.log");
+//            FileUtils.write(fFile, Arrays.toString(f) + "\n", true);
+//            File oFile = new File(getDataPath() + File.separator + "o.log");
+//            FileUtils.write(oFile, Arrays.toString(o) + "\n", true);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
         int size = c_.length;
         for (int k = 0; k < size; k++) {
-            c_[k] = c_[k] * DataUtil.sigmod(f[k] + 1) + DataUtil.sigmod(i[k]) * DataUtil.tanh(j[k]);
-            h_[k] = DataUtil.tanh(c_[k]) * DataUtil.sigmod(o[k]);
+            c_[k] = c_[k] * DataUtil.sigmoid(f[k] + 1) + DataUtil.sigmoid(i[k]) * DataUtil.tanh(j[k]);
+            h_[k] = DataUtil.tanh(c_[k]) * DataUtil.sigmoid(o[k]);
         }
-
+        try {
+            File c_File = new File(getDataPath() + File.separator + "c_.log");
+            FileUtils.write(c_File, Arrays.toString(c_) + "\n", false);
+            File h_File = new File(getDataPath() + File.separator + "h_.log");
+            FileUtils.write(h_File, Arrays.toString(h_) + "\n", false);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         float[][] state = new float[2][];
         state[0] = c_;
         state[1] = h_;
@@ -123,7 +154,14 @@ public class Model {
 
         float[][] outputs = new float[timeSteps][];
         x = DataUtil.relu(Matrix.addVec(Matrix.multiply(x, w_in), b_in));
-
+//        try {
+//            for (float[] aX : x) {
+//                File xFile = new File(getDataPath() + File.separator + "x_relu.log");
+//                FileUtils.write(xFile, Arrays.toString(aX) + "\n", true);
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
         for (int j = 0; j < layerSize; j++) {
             float[] c = new float[hidden_units];
             float[] h = new float[hidden_units];
@@ -141,7 +179,7 @@ public class Model {
         }
 
         float[] outProb = Matrix.vecAddVec(Matrix.vecMulMat(outputs[timeSteps - 1], w_out), b_out);
-//        System.out.println("out:" + Arrays.toString(outProb).replaceAll("[\\[ | \\] | ,]", " "));
+        System.out.println("out:" + Arrays.toString(outProb).replaceAll("[\\[ | \\] | ,]", " "));
         return DataUtil.argmax(outProb) + 1;
     }
 
@@ -166,11 +204,12 @@ public class Model {
         float[] convertedX = alter2Dto1D(x);
         float[] convertedWIn = alter2Dto1D(w_in);
         float[] convertedWOut = alter2Dto1D(w_out);
+        float[] convertedWeights = alter3Dto1D(weights);
+        float[] convertedBiases = alter2Dto1D(biases);
 
         ScriptC_main scriptC_main = new ScriptC_main(mRs);
         scriptC_main.set_timeSteps(timeSteps);
         scriptC_main.set_inputDims(inDim);
-        scriptC_main.set_outputDims(outDim);
         scriptC_main.set_hiddenUnites(hidden_units);
         scriptC_main.set_layerSize(layerSize);
 
@@ -202,24 +241,23 @@ public class Model {
         Type cellDataType = Type.createXY(mRs, Element.F32(mRs), hidden_units, timeSteps);
         Allocation inputsAlloc = Allocation.createTyped(mRs, cellDataType);
         scriptC_main.set_inputs(inputsAlloc);
-//        float[] inputs = new float[timeSteps * hidden_units];
-//        Allocation outputsAlloc = Allocation.createTyped(mRs, cellDataType);
-//        scriptC_main.set_outputs(outputsAlloc);
-//        float[] outputs = new float[timeSteps * hidden_units];
 
-        scriptC_main.invoke_predict();
-//        scriptC_main.set_matAB(inputsAlloc);
-//        scriptC_main.set_matA(inputRawAlloc);
-//        scriptC_main.set_matB(wInAlloc);
-//        scriptC_main.set_sameDim(inDim);
-//        scriptC_main.forEach_input_transform(inputsAlloc);
-//        inputsAlloc.copyTo(inputs);
-//        System.out.println("inputs: " + Arrays.toString(inputs));
+        Type weightType = Type.createXYZ(mRs, Element.F32(mRs), hidden_units * 4, hidden_units * 2,
+                layerSize);
+        Allocation weightAlloc = Allocation.createTyped(mRs, weightType);
+        weightAlloc.copyFrom(convertedWeights);
+        scriptC_main.set_weights(weightAlloc);
+
+        Type biasType = Type.createXY(mRs, Element.F32(mRs), hidden_units * 4, layerSize);
+        Allocation biasAlloc = Allocation.createTyped(mRs, biasType);
+        biasAlloc.copyFrom(convertedBiases);
+        scriptC_main.set_biases(biasAlloc);
 
         // initialize output label allocation
         Allocation labelProbAlloc = Allocation.createSized(mRs, Element.F32(mRs), outDim);
         scriptC_main.set_label_prob(labelProbAlloc);
         float[] labelProb = new float[outDim];
+        scriptC_main.invoke_predict();
 
         // copy result back
         labelProbAlloc.copyTo(labelProb);
