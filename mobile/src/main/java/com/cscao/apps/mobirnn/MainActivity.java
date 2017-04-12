@@ -9,10 +9,10 @@ import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.renderscript.RenderScript;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.renderscript.RenderScript;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.util.Pair;
@@ -27,6 +27,7 @@ import com.cscao.apps.mobirnn.helper.Util;
 import com.cscao.apps.mobirnn.model.Model;
 import com.orhanobut.logger.Logger;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.Random;
@@ -198,11 +199,16 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
             String dataRootPath = params[0];
             Model lstmModel = null;
             Log.d("run", "begin model loading");
+            if (!new File(dataRootPath).exists()) {
+                publishProgress("-1", "model and data not exist!");
+                this.cancel(true);
+            }
             try {
                 lstmModel = new Model(dataRootPath, mIsCpuMode);
                 publishProgress("0", "model loaded");
                 if (!mIsCpuMode) {
-                    RenderScript rs = RenderScript.create(getApplicationContext(), RenderScript.ContextType.DEBUG);
+                    RenderScript rs = RenderScript.create(getApplicationContext(),
+                            RenderScript.ContextType.NORMAL);
                     lstmModel.setRs(rs);
                 }
             } catch (IOException e) {
@@ -291,14 +297,16 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
         }
 
         private void updateUIUponTaskEnding(Pair<Float, Float> pair) {
-            float accuracy = pair.first;
-            float time = pair.second;
-            String show = String.format(Locale.US,
-                    "Accuracy is: %s  %%. Time spent: %s s", accuracy, time);
-            mResultTextView.setText(show);
+            if (pair != null) {
+                float accuracy = pair.first;
+                float time = pair.second;
+                String show = String.format(Locale.US,
+                        "Accuracy is: %s  %%. Time spent: %s s", accuracy, time);
+                mResultTextView.setText(show);
 
-            String status = String.format(Locale.US, "%s: task finished\n", getTimestampString());
-            mStatusTextView.append(status);
+                String status = String.format(Locale.US, "%s: task finished\n", getTimestampString());
+                mStatusTextView.append(status);
+            }
 
             controlToggle.setChecked(false);
         }
