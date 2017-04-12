@@ -46,29 +46,37 @@ static void print(rs_allocation mat){
     }
 }
 
-rs_allocation c;
-rs_allocation h;
+float* c;
+float* h;
 
-rs_allocation input_concat;
-rs_allocation linear_result;
+float* input_concat;
+float* linear_result;
 uint32_t current_layer;
 uint32_t current_step;
 
-void RS_KERNEL concat_in(float in, uint32_t x, uint32_t y){
-    float inputVal = rsGetElementAt_float(inputs, x, current_step);
-    rsSetElementAt_float(input_concat, inputVal, x);
+void concat_in_h(){
+    for (uint32_t x = 0; x < hiddenUnites; x++) {
+        float inVal = rsGetElementAt_float(inputs, x, current_step);
+        input_concat[x] = inVal;
+        input_concat[hiddenUnites + x] = h[x];
+    }
 }
 
-void RS_KERNEL concat_h(float in, uint32_t x){
-    rsSetElementAt_float(input_concat, in, hiddenUnites + x);
-}
+// void RS_KERNEL concat_in(float in, uint32_t x, uint32_t y){
+//     float inputVal = rsGetElementAt_float(inputs, x, current_step);
+//     rsSetElementAt_float(input_concat, inputVal, x);
+// }
+
+// void RS_KERNEL concat_h(float in, uint32_t x){
+//     rsSetElementAt_float(input_concat, in, hiddenUnites + x);
+// }
 
 float RS_KERNEL linear_map(uint32_t x){
     float sum = 0.0f;
     //rsDebug("current_layer=",  current_layer);
-    for (uint32_t c = 0; c < hiddenUnites * 2; c++) {
-        float a = rsGetElementAt_float(input_concat, c);
-        float b = rsGetElementAt_float(weights, x, c, current_layer);
+    for (uint32_t unit = 0; unit < hiddenUnites * 2; unit++) {
+        float a = input_concat[unit];
+        float b = rsGetElementAt_float(weights, x, unit, current_layer);
         //rsDebug("a=",  (*a));
         //rsDebug("b=",  (*b));
         sum += a * b;
@@ -80,48 +88,27 @@ float RS_KERNEL linear_map(uint32_t x){
     return sum;
 }
 
-rs_allocation i_gate;
-rs_allocation j_val; // C_hat in original formula
-rs_allocation f_gate;
-rs_allocation o_gate;
-
-float RS_KERNEL get_i(uint32_t x){
-    return rsGetElementAt_float(linear_result, x);
-}
-
-float RS_KERNEL get_j(uint32_t x){
-    return rsGetElementAt_float(linear_result, hiddenUnites + x);
-}
-
-float RS_KERNEL get_f(uint32_t x){
-    return rsGetElementAt_float(linear_result, hiddenUnites * 2 + x);
-}
-
-float RS_KERNEL get_o(uint32_t x){
-    return rsGetElementAt_float(linear_result, hiddenUnites * 3 + x);
-}
-
 static inline float sigmoid(float x){
      return 1.0f / (1.0f + exp(-x));
 }
 
-float RS_KERNEL pointwise_c(uint32_t x){
-    float cVal = rsGetElementAt_float(c, x);
-    float fVal = rsGetElementAt_float(f_gate, x);
-    float iVal = rsGetElementAt_float(i_gate, x);
-    float jVal = rsGetElementAt_float(j_val, x);
-
-    float newC = cVal * sigmoid(fVal + 1) + sigmoid(iVal) * tanh(jVal);
+void RS_KERNEL pointwise_ch(float in, uint32_t x){
+    float cVal = c[x];
+    float fVal = linear_result[hiddenUnites * 2 + x];
+    float iVal = linear_result[x];
+    float jVal = linear_result[hiddenUnites + x];
+    float oVal = linear_result[hiddenUnites * 3 + x];
+    c[x] = cVal * sigmoid(fVal + 1) + sigmoid(iVal) * tanh(jVal);
     //rsDebug("newC:", newC);
-    return newC;
+    h[x] = tanh(cVal) * sigmoid(oVal);
 }
 
-float RS_KERNEL pointwise_h(uint32_t x){
-    float cVal = rsGetElementAt_float(c, x);
-    float oVal = rsGetElementAt_float(o_gate, x);
+// float RS_KERNEL pointwise_h(uint32_t x){
+//     float cVal = c[x];
+//     float oVal = linear_result[hiddenUnites * 3 + x];
 
-    return tanh(cVal) * sigmoid(oVal);
-}
+//     return tanh(cVal) * sigmoid(oVal);
+// }
 
 void RS_KERNEL update_input(float in, uint32_t x){
     rsSetElementAt_float(inputs, in, x, current_step);
@@ -138,9 +125,9 @@ rs_allocation label_prob;
 
 float RS_KERNEL output_transform(uint32_t x){
     float sum = 0.0f;
-    for (uint32_t c = 0; c < hiddenUnites; c++) {
-        float a = rsGetElementAt_float(h, c);
-        float b = rsGetElementAt_float(w_out, x, c);
+    for (uint32_t unit = 0; unit < hiddenUnites; unit++) {
+        float a = h[unit];
+        float b = rsGetElementAt_float(w_out, x, unit);
         sum += a * b;
     }
     float valB = rsGetElementAt_float(b_out, x);

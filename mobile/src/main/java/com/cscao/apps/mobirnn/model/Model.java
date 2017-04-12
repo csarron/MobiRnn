@@ -45,10 +45,7 @@ public class Model {
     private Allocation hAlloc;
     private Allocation inputConcatAlloc;
     private Allocation linearResultAlloc;
-    private Allocation iAlloc;
-    private Allocation jAlloc;
-    private Allocation fAlloc;
-    private Allocation oAlloc;
+
 
     public Model(String modelFolder, boolean isModeCpu) throws IOException {
         this(modelFolder);
@@ -247,18 +244,11 @@ public class Model {
             for (int j = 0; j < timeSteps; j++) {
                 scriptC_main.set_current_step(j);
 
-                scriptC_main.forEach_concat_in(inputsAlloc);
-                scriptC_main.forEach_concat_h(hAlloc);
+                scriptC_main.invoke_concat_in_h();
 
                 scriptC_main.forEach_linear_map(linearResultAlloc);
 
-                scriptC_main.forEach_get_i(iAlloc);
-                scriptC_main.forEach_get_j(jAlloc);
-                scriptC_main.forEach_get_f(fAlloc);
-                scriptC_main.forEach_get_o(oAlloc);
-
-                scriptC_main.forEach_pointwise_c(cAlloc);
-                scriptC_main.forEach_pointwise_h(hAlloc);
+                scriptC_main.forEach_pointwise_ch(cAlloc);// or pass hAlloc
 
                 scriptC_main.forEach_update_input(hAlloc);
             }
@@ -308,30 +298,19 @@ public class Model {
 
     private void allocIntermediateVariables() {
         cAlloc = Allocation.createSized(mRs, Element.F32(mRs), hidden_units);
-        scriptC_main.set_c(cAlloc);
+        scriptC_main.bind_c(cAlloc);
 
         hAlloc = Allocation.createSized(mRs, Element.F32(mRs), hidden_units);
-        scriptC_main.set_h(hAlloc);
+        scriptC_main.bind_h(hAlloc);
 
         inputConcatAlloc = Allocation.createSized(mRs, Element.F32(mRs),
                 hidden_units * 2);
-        scriptC_main.set_input_concat(inputConcatAlloc);
+        scriptC_main.bind_input_concat(inputConcatAlloc);
 
         linearResultAlloc = Allocation.createSized(mRs, Element.F32(mRs),
                 hidden_units * 4);
-        scriptC_main.set_linear_result(linearResultAlloc);
+        scriptC_main.bind_linear_result(linearResultAlloc);
 
-        iAlloc = Allocation.createSized(mRs, Element.F32(mRs), hidden_units);
-        scriptC_main.set_i_gate(iAlloc);
-
-        jAlloc = Allocation.createSized(mRs, Element.F32(mRs), hidden_units);
-        scriptC_main.set_j_val(jAlloc);
-
-        fAlloc = Allocation.createSized(mRs, Element.F32(mRs), hidden_units);
-        scriptC_main.set_f_gate(fAlloc);
-
-        oAlloc = Allocation.createSized(mRs, Element.F32(mRs), hidden_units);
-        scriptC_main.set_o_gate(oAlloc);
     }
 
 
