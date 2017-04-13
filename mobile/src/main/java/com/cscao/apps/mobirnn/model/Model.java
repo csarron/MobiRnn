@@ -231,30 +231,36 @@ public class Model {
 
         // initialize label probability output allocation
         Allocation labelProbAlloc = Allocation.createSized(mRs, Element.F32(mRs), outDim);
-        scriptC_main.set_label_prob(labelProbAlloc);
+        scriptC_main.bind_label_prob(labelProbAlloc);
+        scriptC_main.set_outDim(outDim);
 
         // begin model forward pass computation
         long start = System.currentTimeMillis();
 
-        scriptC_main.forEach_input_transform(inputsAlloc);
+//        scriptC_main.forEach_input_transform(inputsAlloc);
+        scriptC_main.invoke_input_transform_func();
         for (int i = 0; i < layerSize; i++) {
-            scriptC_main.forEach_set_zeros(cAlloc);
-            scriptC_main.forEach_set_zeros(hAlloc);
+//            scriptC_main.forEach_set_zeros(cAlloc);
+//            scriptC_main.forEach_set_zeros(hAlloc);
+            scriptC_main.invoke_set_ch_zeros();
             scriptC_main.set_current_layer(i);
             for (int j = 0; j < timeSteps; j++) {
                 scriptC_main.set_current_step(j);
+                scriptC_main.invoke_calc_cell_one_step();
+//                scriptC_main.invoke_concat_in_h();
 
-                scriptC_main.invoke_concat_in_h();
+//                scriptC_main.forEach_linear_map(linearResultAlloc);
+//                scriptC_main.invoke_linear_map_func();
 
-                scriptC_main.forEach_linear_map(linearResultAlloc);
+//                scriptC_main.forEach_pointwise_ch(cAlloc);// or pass hAlloc
+//                scriptC_main.invoke_pointwise_ch_func();
 
-                scriptC_main.forEach_pointwise_ch(cAlloc);// or pass hAlloc
-
-                scriptC_main.forEach_update_input(hAlloc);
+//                scriptC_main.forEach_update_input(hAlloc);
+//                scriptC_main.invoke_update_input_func();
             }
         }
-        scriptC_main.forEach_output_transform(labelProbAlloc);
-        scriptC_main.destroy();
+//        scriptC_main.forEach_output_transform(labelProbAlloc);
+        scriptC_main.invoke_output_transform_func();
         mRs.finish();
 
         long end = System.currentTimeMillis();
