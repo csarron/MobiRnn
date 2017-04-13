@@ -203,3 +203,16 @@ void output_transform_func(){
         label_prob[x] = sum + valB;
    }
 }
+
+void all_in_one(){
+    input_transform_func();
+    for (uint32_t layer = 0; layer < layerSize; layer++) {
+        set_ch_zeros();
+        current_layer = layer;
+        for (uint32_t t = 0; t < timeSteps; t++) {
+            current_step =t;
+            calc_cell_one_step();
+        }
+   }
+   output_transform_func();
+}
