@@ -254,6 +254,7 @@ public class Model {
             }
         }
         scriptC_main.forEach_output_transform(labelProbAlloc);
+        scriptC_main.destroy();
         mRs.finish();
 
         long end = System.currentTimeMillis();
