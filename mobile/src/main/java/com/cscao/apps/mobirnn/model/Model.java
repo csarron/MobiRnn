@@ -41,10 +41,6 @@ public class Model {
     private int inDim;
     private int outDim;
     private ScriptC_main scriptC_main;
-    private Allocation cAlloc;
-    private Allocation hAlloc;
-    private Allocation inputConcatAlloc;
-    private Allocation linearResultAlloc;
 
 
     public Model(String modelFolder, boolean isModeCpu) throws IOException {
@@ -304,17 +300,17 @@ public class Model {
     }
 
     private void allocIntermediateVariables() {
-        cAlloc = Allocation.createSized(mRs, Element.F32(mRs), hidden_units);
+        Allocation cAlloc = Allocation.createSized(mRs, Element.F32(mRs), hidden_units);
         scriptC_main.bind_c(cAlloc);
 
-        hAlloc = Allocation.createSized(mRs, Element.F32(mRs), hidden_units);
+        Allocation hAlloc = Allocation.createSized(mRs, Element.F32(mRs), hidden_units);
         scriptC_main.bind_h(hAlloc);
 
-        inputConcatAlloc = Allocation.createSized(mRs, Element.F32(mRs),
+        Allocation inputConcatAlloc = Allocation.createSized(mRs, Element.F32(mRs),
                 hidden_units * 2);
         scriptC_main.bind_input_concat(inputConcatAlloc);
 
-        linearResultAlloc = Allocation.createSized(mRs, Element.F32(mRs),
+        Allocation linearResultAlloc = Allocation.createSized(mRs, Element.F32(mRs),
                 hidden_units * 4);
         scriptC_main.bind_linear_result(linearResultAlloc);
 
