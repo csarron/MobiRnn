@@ -41,7 +41,6 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
     public final int PERMISSIONS_REQUEST_CODE = 7;
     private ToggleButton controlToggle;
     private TextView mStatusTextView;
-    private TextView mResultTextView;
     private ProgressBar mResultProgress;
 
     private Task mTask;
@@ -58,7 +57,6 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
 
         mStatusTextView = (TextView) findViewById(R.id.tv_status);
         mStatusTextView.setMovementMethod(new ScrollingMovementMethod());
-        mResultTextView = (TextView) findViewById(R.id.tv_result);
         mResultProgress = (ProgressBar) findViewById(R.id.progress);
         mResultProgress.setMax(100);
 
@@ -120,7 +118,6 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
 
     public void controlRun(View view) {
         if (controlToggle.isChecked()) {
-            mResultTextView.setText("");
             mStatusTextView.setText("");
             mTask = new Task();
             mTask.mIsCpuMode = mIsCpuMode;
@@ -143,7 +140,6 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
                 getTimestampString(), info);
         mStatusTextView.append(status);
         mResultProgress.setProgress(0);
-        mResultTextView.setText("");
     }
 
     @Override
@@ -302,10 +298,11 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
                 float time = pair.second;
                 String show = String.format(Locale.US,
                         "Accuracy is: %s  %%. Time spent: %s s", accuracy, time);
-                mResultTextView.setText(show);
-
-                String status = String.format(Locale.US, "%s: task finished\n", getTimestampString());
+                String status = String.format(Locale.US, "%s: task finished\n",
+                        getTimestampString());
                 mStatusTextView.append(status);
+                mStatusTextView.append(show);
+
             }
 
             controlToggle.setChecked(false);
@@ -327,5 +324,18 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
         }
     }
 
-//    public native String stringFromJNI();
+    //    public native String stringFromJNI();
+
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+    }
+
 }
