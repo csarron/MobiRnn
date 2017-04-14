@@ -25,7 +25,7 @@
             android:id="@+id/radio_group"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
+            android:layout_marginStart="10dp"
             android:checkedButton="@+id/radio_gpu"
             android:orientation="horizontal">
 
@@ -33,9 +33,15 @@
                 android:id="@+id/radio_cpu"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="20dp"
                 android:onClick="onRadioButtonClicked"
                 android:text="@string/cpu" />
+
+            <RadioButton
+                android:id="@+id/radio_native"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="onRadioButtonClicked"
+                android:text="@string/native_cpu" />
 
             <RadioButton
                 android:id="@+id/radio_gpu"
@@ -66,16 +72,17 @@
             android:layout_width="wrap_content"
             android:layout_height="60dp"
             android:layout_gravity="center"
-            android:layout_marginStart="20dp" />
+            android:layout_marginStart="10dp" />
 
         <ToggleButton
             android:id="@+id/toggle_control"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:layout_marginStart="20dp"
+            android:layout_marginStart="60dp"
             android:checked="false"
             android:onClick="controlRun"
+            android:textStyle="bold"
             android:textOff="@string/run"
             android:textOn="@string/stop" />
     </LinearLayout>

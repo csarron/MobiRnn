@@ -32,7 +32,7 @@ public class Model {
     private float[] b_out;
     private int layerSize;
     private int hidden_units;
-    private boolean isModeCpu = true;
+    private Model.MODE mMODE = MODE.GPU;
     private RenderScript mRs;
     private float[] convertedWIn;
     private float[] convertedWOut;
@@ -46,9 +46,23 @@ public class Model {
         System.loadLibrary("main");
     }
 
-    public Model(String modelFolder, boolean isModeCpu) throws IOException {
+    public enum MODE {
+        CPU("CPU"), NATIVE("Native"), GPU("GPU");
+        String mType;
+
+        MODE(String type) {
+            mType = type;
+        }
+
+        @Override
+        public String toString() {
+            return mType;
+        }
+    }
+
+    public Model(String modelFolder, Model.MODE mode) throws IOException {
         this(modelFolder);
-        this.isModeCpu = isModeCpu;
+        this.mMODE = mode;
     }
 
     public Model(String dataFolder) throws IOException {
@@ -157,10 +171,15 @@ public class Model {
     }
 
     public int predict(float[][] x) {
-        if (isModeCpu) {
-            return predictNativeCpu(x);
-        } else {
-            return predictOnGpu(x);
+        switch (mMODE) {
+            case CPU:
+               return predictOnCpu(x);
+            case GPU:
+                return predictOnGpu(x);
+            case NATIVE:
+                return predictNativeCpu(x);
+            default:
+                return predictOnGpu(x);
         }
     }
 
@@ -171,6 +190,7 @@ public class Model {
                 convertedWOut, b_out, convertedWeights, convertedBiases, inputs);
 
     }
+
     private int predictOnCpu(float[][] x) {
 //        int timeSteps = x.length;
 
@@ -331,7 +351,8 @@ public class Model {
         scriptC_main = new ScriptC_main(rs);
     }
 
-    public native int predictNative(int layerSize, int timeSteps, int hiddenUnits, int inDim, int outDim,
+    public native int predictNative(int layerSize, int timeSteps, int hiddenUnits, int inDim,
+            int outDim,
             float[] convertedWIn, float[] bIn, float[] convertedWOut,
             float[] bOut, float[] convertedWeights, float[] convertedBiases, float[] input);
 }

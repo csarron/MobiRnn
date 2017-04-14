@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.cscao.apps.mobirnn.MainActivity"
+    tools:context="com.cscao.apps.mobirnn.PhoneActivity"
     tools:deviceIds="wear_square">
 
     <TextView

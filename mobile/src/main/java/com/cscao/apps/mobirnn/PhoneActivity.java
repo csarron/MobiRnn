@@ -32,7 +32,7 @@ import java.io.IOException;
 import java.util.Locale;
 import java.util.Random;
 
-public class MainActivity extends Activity implements NumberPicker.OnValueChangeListener {
+public class PhoneActivity extends Activity implements NumberPicker.OnValueChangeListener {
 
     //    // Used to load the 'native-lib' library on application startup.
 //    static {
@@ -45,7 +45,7 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
 
     private Task mTask;
     private long mSeed;
-    private boolean mIsCpuMode = false;
+    private Model.MODE mRunMode = Model.MODE.GPU;
     private int mSampleSize;
     final String[] mSampleSizes = {"1", "10", "50", "100", "200", "500"};
 
@@ -104,15 +104,18 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
     public void onRadioButtonClicked(View view) {
         switch (view.getId()) {
             case R.id.radio_cpu:
-                mIsCpuMode = true;
+                mRunMode = Model.MODE.CPU;
                 Logger.d("selected cpu mode");
                 break;
             case R.id.radio_gpu:
-                mIsCpuMode = false;
+                mRunMode = Model.MODE.GPU;
                 Logger.d("selected gpu mode");
                 break;
+            case R.id.radio_native:
+                mRunMode = Model.MODE.NATIVE;
+                Logger.d("selected native mode");
             default:
-                mIsCpuMode = false;
+                mRunMode = Model.MODE.GPU;
         }
     }
 
@@ -120,7 +123,7 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
         if (controlToggle.isChecked()) {
             mStatusTextView.setText("");
             mTask = new Task();
-            mTask.mIsCpuMode = mIsCpuMode;
+            mTask.mMODE = mRunMode;
             mTask.mSampleSize = mSampleSize;
             mTask.mSeed = mSeed;
 
@@ -156,7 +159,7 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
 
     private class Task extends AsyncTask<String, String, Pair<Float, Float>> {
 
-        private boolean mIsCpuMode;
+        private Model.MODE mMODE;
         private int mSampleSize;
         private long mSeed;
 
@@ -200,9 +203,9 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
                 this.cancel(true);
             }
             try {
-                lstmModel = new Model(dataRootPath, mIsCpuMode);
+                lstmModel = new Model(dataRootPath, mMODE);
                 publishProgress("0", "model loaded");
-                if (!mIsCpuMode) {
+                if (mMODE == Model.MODE.GPU) {
                     RenderScript rs = RenderScript.create(getApplicationContext(),
                             RenderScript.ContextType.NORMAL);
                     lstmModel.setRs(rs);
@@ -274,7 +277,7 @@ public class MainActivity extends Activity implements NumberPicker.OnValueChange
         @Override
         protected void onPreExecute() {
             String mode = String.format(Locale.US,
-                    "running model on %s\n", mIsCpuMode ? "CPU" : "GPU");
+                    "running model on %s\n", mMODE.toString());
             mStatusTextView.append(mode);
 
             String info = String.format(Locale.US,
