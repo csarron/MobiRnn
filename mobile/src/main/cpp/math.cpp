@@ -17,7 +17,7 @@ float* addVec(float* m, int mx, int my, float* v, int vy){
 }
 
 float* vecAddVec(float* a, float* b, int len){
-    float* c = (float*) malloc( len * sizeof(float));
+    float c[len];
     for (int i = 0; i < len; i++) {
         c[i] = a[i] + b[i];
     }
@@ -37,5 +37,17 @@ float* multiply(float* a, float* b, int m, int p, int n){
 }
 
 float sigmoid(float x) {
-    return 1 / (1 + (float) exp(-x));
+    return 1 / (1 + expf(-x));
+}
+
+int argmax(float* x, int len) {
+    int max = 0;
+    float a = 0.0f;
+    for (int i = 0; i < len; i++) {
+        if (x[i] > a) {
+            a = x[i];
+            max = i;
+        }
+    }
+    return max;
 }

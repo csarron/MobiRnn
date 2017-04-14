@@ -1,17 +1,17 @@
 #pragma version(1)
 #pragma rs java_package_name(com.cscao.apps.mobirnn)
 
-rs_allocation inputRaw;
-uint32_t timeSteps;
-uint32_t inputDims;
+rs_allocation input_raw;
+uint32_t time_steps;
+uint32_t in_dim;
 
 rs_allocation w_in;
 rs_allocation b_in;
 
 float RS_KERNEL input_transform(uint32_t x, uint32_t y){
     float sum = 0.0f;
-    for (uint32_t c = 0; c < inputDims; c++) {
-        float a = rsGetElementAt_float(inputRaw, c, y);
+    for (uint32_t c = 0; c < in_dim; c++) {
+        float a = rsGetElementAt_float(input_raw, c, y);
         float b = rsGetElementAt_float(w_in, x, c);
         sum += a * b;
     }
@@ -22,16 +22,16 @@ float RS_KERNEL input_transform(uint32_t x, uint32_t y){
 
 rs_allocation weights;
 rs_allocation biases;
-uint32_t layerSize;
-uint32_t hiddenUnites;
-rs_allocation inputs;  // timeSteps * hiddenUnits
+uint32_t layer_size;
+uint32_t hidden_unites;
+rs_allocation inputs;  // time_steps * hiddenUnits
 
 void input_transform_func(){
-    for (uint32_t x = 0; x < hiddenUnites; x++) {
-        for (uint32_t y = 0; y < timeSteps; y++) {
+    for (uint32_t x = 0; x < hidden_unites; x++) {
+        for (uint32_t y = 0; y < time_steps; y++) {
             float sum = 0.0f;
-            for (uint32_t c = 0; c < inputDims; c++) {
-                float a = rsGetElementAt_float(inputRaw, c, y);
+            for (uint32_t c = 0; c < in_dim; c++) {
+                float a = rsGetElementAt_float(input_raw, c, y);
                 float b = rsGetElementAt_float(w_in, x, c);
                 sum += a * b;
             }
@@ -49,7 +49,7 @@ float* c;
 float* h;
 
 void set_ch_zeros(){
-    for (uint32_t x = 0; x < hiddenUnites; x++) {
+    for (uint32_t x = 0; x < hidden_unites; x++) {
         h[x] = 0;
         c[x] = 0;
     }
@@ -61,17 +61,17 @@ uint32_t current_layer;
 uint32_t current_step;
 
 void concat_in_h(){
-    for (uint32_t x = 0; x < hiddenUnites; x++) {
+    for (uint32_t x = 0; x < hidden_unites; x++) {
         float inVal = rsGetElementAt_float(inputs, x, current_step);
         input_concat[x] = inVal;
-        input_concat[hiddenUnites + x] = h[x];
+        input_concat[hidden_unites + x] = h[x];
     }
 }
 
 float RS_KERNEL linear_map(uint32_t x){
     float sum = 0.0f;
     //rsDebug("current_layer=",  current_layer);
-    for (uint32_t unit = 0; unit < hiddenUnites * 2; unit++) {
+    for (uint32_t unit = 0; unit < hidden_unites * 2; unit++) {
         float a = input_concat[unit];
         float b = rsGetElementAt_float(weights, x, unit, current_layer);
         //rsDebug("a=",  (*a));
@@ -85,9 +85,9 @@ float RS_KERNEL linear_map(uint32_t x){
 }
 
 void linear_map_func(){
-    for (uint32_t x = 0; x < hiddenUnites * 4; x++) {
+    for (uint32_t x = 0; x < hidden_unites * 4; x++) {
         float sum = 0.0f;
-        for (uint32_t unit = 0; unit < hiddenUnites * 2; unit++) {
+        for (uint32_t unit = 0; unit < hidden_unites * 2; unit++) {
             float a = input_concat[unit];
             float b = rsGetElementAt_float(weights, x, unit, current_layer);
             //rsDebug("a=",  (*a));
@@ -106,22 +106,22 @@ static inline float sigmoid(float x){
 
 void RS_KERNEL pointwise_ch(float in, uint32_t x){
     float cVal = c[x];
-    float fVal = linear_result[hiddenUnites * 2 + x];
+    float fVal = linear_result[hidden_unites * 2 + x];
     float iVal = linear_result[x];
-    float jVal = linear_result[hiddenUnites + x];
-    float oVal = linear_result[hiddenUnites * 3 + x];
+    float jVal = linear_result[hidden_unites + x];
+    float oVal = linear_result[hidden_unites * 3 + x];
     c[x] = cVal * sigmoid(fVal + 1) + sigmoid(iVal) * tanh(jVal);
     //rsDebug("newC:", newC);
     h[x] = tanh(cVal) * sigmoid(oVal);
 }
 
 void pointwise_ch_func(){
-    for (uint32_t x = 0; x < hiddenUnites; x++) {
+    for (uint32_t x = 0; x < hidden_unites; x++) {
         float cVal = c[x];
-        float fVal = linear_result[hiddenUnites * 2 + x];
+        float fVal = linear_result[hidden_unites * 2 + x];
         float iVal = linear_result[x];
-        float jVal = linear_result[hiddenUnites + x];
-        float oVal = linear_result[hiddenUnites * 3 + x];
+        float jVal = linear_result[hidden_unites + x];
+        float oVal = linear_result[hidden_unites * 3 + x];
         c[x] = cVal * sigmoid(fVal + 1) + sigmoid(iVal) * tanh(jVal);
         h[x] = tanh(cVal) * sigmoid(oVal);
     }
@@ -132,21 +132,21 @@ void RS_KERNEL update_input(float in, uint32_t x){
 }
 
 void update_input_func(){
-    for (uint32_t x = 0; x < hiddenUnites; x++) {
+    for (uint32_t x = 0; x < hidden_unites; x++) {
         rsSetElementAt_float(inputs, h[x], x, current_step);
     }
 }
 
 void calc_cell_one_step(){
-    for (uint32_t x = 0; x < hiddenUnites; x++) {
+    for (uint32_t x = 0; x < hidden_unites; x++) {
         float inVal = rsGetElementAt_float(inputs, x, current_step);
         input_concat[x] = inVal;
-        input_concat[hiddenUnites + x] = h[x];
+        input_concat[hidden_unites + x] = h[x];
     }
 
-    for (uint32_t x = 0; x < hiddenUnites * 4; x++) {
+    for (uint32_t x = 0; x < hidden_unites * 4; x++) {
         float sum = 0.0f;
-        for (uint32_t unit = 0; unit < hiddenUnites * 2; unit++) {
+        for (uint32_t unit = 0; unit < hidden_unites * 2; unit++) {
             float a = input_concat[unit];
             float b = rsGetElementAt_float(weights, x, unit, current_layer);
             //rsDebug("a=",  (*a));
@@ -158,17 +158,17 @@ void calc_cell_one_step(){
         linear_result[x] = sum + valB;
    }
 
-    for (uint32_t x = 0; x < hiddenUnites; x++) {
+    for (uint32_t x = 0; x < hidden_unites; x++) {
         float cVal = c[x];
-        float fVal = linear_result[hiddenUnites * 2 + x];
+        float fVal = linear_result[hidden_unites * 2 + x];
         float iVal = linear_result[x];
-        float jVal = linear_result[hiddenUnites + x];
-        float oVal = linear_result[hiddenUnites * 3 + x];
+        float jVal = linear_result[hidden_unites + x];
+        float oVal = linear_result[hidden_unites * 3 + x];
         c[x] = cVal * sigmoid(fVal + 1) + sigmoid(iVal) * tanh(jVal);
-        h[x] = tanh(cVal) * sigmoid(oVal);
+        h[x] = tanh(c[x]) * sigmoid(oVal);
     }
 
-    for (uint32_t x = 0; x < hiddenUnites; x++) {
+    for (uint32_t x = 0; x < hidden_unites; x++) {
         rsSetElementAt_float(inputs, h[x], x, current_step);
     }
 }
@@ -177,11 +177,11 @@ rs_allocation w_out;
 rs_allocation b_out;
 
 float* label_prob;
-uint32_t outDim;
+uint32_t out_dim;
 
 float RS_KERNEL output_transform(uint32_t x){
     float sum = 0.0f;
-    for (uint32_t unit = 0; unit < hiddenUnites; unit++) {
+    for (uint32_t unit = 0; unit < hidden_unites; unit++) {
         float a = h[unit];
         float b = rsGetElementAt_float(w_out, x, unit);
         sum += a * b;
@@ -192,9 +192,9 @@ float RS_KERNEL output_transform(uint32_t x){
 }
 
 void output_transform_func(){
-    for (uint32_t x = 0; x < outDim; x++) {
+    for (uint32_t x = 0; x < out_dim; x++) {
         float sum = 0.0f;
-        for (uint32_t unit = 0; unit < hiddenUnites; unit++) {
+        for (uint32_t unit = 0; unit < hidden_unites; unit++) {
             float a = h[unit];
             float b = rsGetElementAt_float(w_out, x, unit);
             sum += a * b;
@@ -206,10 +206,10 @@ void output_transform_func(){
 
 void all_in_one(){
     input_transform_func();
-    for (uint32_t layer = 0; layer < layerSize; layer++) {
+    for (uint32_t layer = 0; layer < layer_size; layer++) {
         set_ch_zeros();
         current_layer = layer;
-        for (uint32_t t = 0; t < timeSteps; t++) {
+        for (uint32_t t = 0; t < time_steps; t++) {
             current_step =t;
             calc_cell_one_step();
         }

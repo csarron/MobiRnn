@@ -14,5 +14,6 @@ float* addVec(float* m, int mx, int my, float* v, int vy);
 float* vecAddVec(float* a, float* b, int len);
 float* multiply(float* a, float* b, int m, int p, int n);
 float sigmoid(float x);
+int argmax(float* x, int len);
 
 #endif //MOBIRNN_MATH_H

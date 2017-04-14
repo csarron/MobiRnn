@@ -42,6 +42,9 @@ public class Model {
     private int outDim;
     private ScriptC_main scriptC_main;
 
+    static {
+        System.loadLibrary("main");
+    }
 
     public Model(String modelFolder, boolean isModeCpu) throws IOException {
         this(modelFolder);
@@ -141,9 +144,9 @@ public class Model {
         }
 //        try {
 //            File c_File = new File(getDataPath() + File.separator + "c_.log");
-//            FileUtils.write(c_File, Arrays.toString(c_) + "\n", false);
+//            FileUtils.write(c_File, Arrays.toString(c_) + "\n", true);
 //            File h_File = new File(getDataPath() + File.separator + "h_.log");
-//            FileUtils.write(h_File, Arrays.toString(h_) + "\n", false);
+//            FileUtils.write(h_File, Arrays.toString(h_) + "\n", true);
 //        } catch (IOException e) {
 //            e.printStackTrace();
 //        }
@@ -155,12 +158,19 @@ public class Model {
 
     public int predict(float[][] x) {
         if (isModeCpu) {
-            return predictOnCpu(x);
+            return predictNativeCpu(x);
         } else {
             return predictOnGpu(x);
         }
     }
 
+    private int predictNativeCpu(float[][] x) {
+        int timeSteps = x.length;
+        float[] inputs = alter2Dto1D(x);
+        return predictNative(layerSize, timeSteps, hidden_units, inDim, outDim, convertedWIn, b_in,
+                convertedWOut, b_out, convertedWeights, convertedBiases, inputs);
+
+    }
     private int predictOnCpu(float[][] x) {
 //        int timeSteps = x.length;
 
@@ -204,16 +214,16 @@ public class Model {
         int timeSteps = x.length;
         float[] convertedX = alter2Dto1D(x);
 
-        scriptC_main.set_timeSteps(timeSteps);
-        scriptC_main.set_inputDims(inDim);
-        scriptC_main.set_hiddenUnites(hidden_units);
-        scriptC_main.set_layerSize(layerSize);
+        scriptC_main.set_time_steps(timeSteps);
+        scriptC_main.set_in_dim(inDim);
+        scriptC_main.set_hidden_unites(hidden_units);
+        scriptC_main.set_layer_size(layerSize);
 
         // initialize input raw data allocation
         Type inRawType = Type.createXY(mRs, Element.F32(mRs), inDim, timeSteps);
         Allocation inputRawAlloc = Allocation.createTyped(mRs, inRawType);
         inputRawAlloc.copyFrom(convertedX);
-        scriptC_main.set_inputRaw(inputRawAlloc);
+        scriptC_main.set_input_raw(inputRawAlloc);
 
         // initialize activated input data allocation
         Type cellDataType = Type.createXY(mRs, Element.F32(mRs), hidden_units, timeSteps);
@@ -228,7 +238,7 @@ public class Model {
         // initialize label probability output allocation
         Allocation labelProbAlloc = Allocation.createSized(mRs, Element.F32(mRs), outDim);
         scriptC_main.bind_label_prob(labelProbAlloc);
-        scriptC_main.set_outDim(outDim);
+        scriptC_main.set_out_dim(outDim);
 
         // begin model forward pass computation
         long start = System.currentTimeMillis();
@@ -320,4 +330,8 @@ public class Model {
         mRs = rs;
         scriptC_main = new ScriptC_main(rs);
     }
+
+    public native int predictNative(int layerSize, int timeSteps, int hiddenUnits, int inDim, int outDim,
+            float[] convertedWIn, float[] bIn, float[] convertedWOut,
+            float[] bOut, float[] convertedWeights, float[] convertedBiases, float[] input);
 }
