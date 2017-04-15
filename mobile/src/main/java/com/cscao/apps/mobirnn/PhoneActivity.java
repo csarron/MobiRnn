@@ -114,6 +114,7 @@ public class PhoneActivity extends Activity implements NumberPicker.OnValueChang
             case R.id.radio_native:
                 mRunMode = Model.MODE.NATIVE;
                 Logger.d("selected native mode");
+                break;
             default:
                 mRunMode = Model.MODE.GPU;
         }
@@ -277,7 +278,7 @@ public class PhoneActivity extends Activity implements NumberPicker.OnValueChang
         @Override
         protected void onPreExecute() {
             String mode = String.format(Locale.US,
-                    "running model on %s\n", mMODE.toString());
+                    "running model in %s mode\n", mMODE.toString());
             mStatusTextView.append(mode);
 
             String info = String.format(Locale.US,
