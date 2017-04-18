@@ -144,6 +144,7 @@ public class PhoneActivity extends Activity implements NumberPicker.OnValueChang
                 getTimestampString(), info);
         mStatusTextView.append(status);
         mResultProgress.setProgress(0);
+        controlToggle.setChecked(false);
     }
 
     @Override
@@ -284,6 +285,7 @@ public class PhoneActivity extends Activity implements NumberPicker.OnValueChang
             String info = String.format(Locale.US,
                     "%s: loading model...\n", getTimestampString());
             mStatusTextView.append(info);
+            mResultProgress.setProgress(0);
         }
 
         @Override
