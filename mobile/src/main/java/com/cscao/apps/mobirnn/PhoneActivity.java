@@ -256,7 +256,10 @@ public class PhoneActivity extends Activity implements NumberPicker.OnValueChang
                     break;
                 }
                 assert lstmModel != null;
+                long s = System.currentTimeMillis();
                 predictedLabels[i] = lstmModel.predict(inputs[i]);
+                long e = System.currentTimeMillis();
+                System.out.println("cpu time: " + (e - s));
                 boolean isCorrect = (predictedLabels[i] == labels[i]);
                 if (isCorrect) {
                     correct++;
@@ -266,7 +269,7 @@ public class PhoneActivity extends Activity implements NumberPicker.OnValueChang
                         "case:%03d,output:%d,label:%d,%s",
                         indices[i], predictedLabels[i], labels[i], isCorrect ? "right" : "wrong");
                 Logger.d(progress);
-                publishProgress("" + (i + 1), progress);
+//                publishProgress("" + (i + 1), progress);
 
             }
             long endTime = System.currentTimeMillis();
