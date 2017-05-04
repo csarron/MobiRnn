@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">MobiRnn</string>
+    <string name="cpu">CPU</string>
+    <string name="gpu">GPU</string>
+    <string name="mode">Mode: </string>
+    <string name="run">Run</string>
+    <string name="stop">Stop</string>
+    <string name="result">Result:&#160;</string>
+    <string name="status">Status</string>
+    <string name="run_model">Begin running model</string>
+    <string name="task_cancelled">Running task cancelled</string>
+    <string name="prediction_size">Prediction Size:</string>
+    <string name="seed_changed">sample seed changed</string>
+    <string name="native_cpu">CPU(Native)</string>
+</resources>
