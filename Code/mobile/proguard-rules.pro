@@ -7,19 +7,22 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
-# Add any project specific keep options here:
+#kryo
+-dontwarn sun.reflect.**
+-dontwarn sun.misc.**
+-dontwarn java.time.**
+-dontwarn java.lang.invoke.**
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
-
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
-
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+-dontwarn java.beans.**
+-keep,allowshrinking class com.esotericsoftware.** {
+   <fields>;
+   <methods>;
+}
+-keep,allowshrinking class java.beans.** { *; }
+-keep,allowshrinking class sun.reflect.** { *; }
+-keep,allowshrinking class com.esotericsoftware.kryo.** { *; }
+-keep,allowshrinking class com.esotericsoftware.kryo.io.** { *; }
+-keep class com.esotericsoftware.kryo.serializers.** { *; }
+-dontwarn com.esotericsoftware.kryo.serializers.**
+-keep,allowshrinking class sun.nio.ch.** { *; }
+-dontwarn sun.nio.ch.**
