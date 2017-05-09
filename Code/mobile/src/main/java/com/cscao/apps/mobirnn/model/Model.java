@@ -11,6 +11,8 @@ import android.renderscript.Type;
 import com.cscao.apps.mobirnn.ScriptC_main;
 import com.orhanobut.logger.Logger;
 
+import org.tensorflow.contrib.android.TensorFlowInferenceInterface;
+
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -173,11 +175,11 @@ public class Model {
     public int predict(float[][] x) {
         switch (mMODE) {
             case CPU:
-               return predictOnCpu(x);
+                return predictOnCpu(x);
             case GPU:
                 return predictOnGpu(x);
             case NATIVE:
-                return predictNativeCpu(x);
+                return predictTF(x);
             default:
                 return predictOnGpu(x);
         }
@@ -355,4 +357,22 @@ public class Model {
             int outDim,
             float[] convertedWIn, float[] bIn, float[] convertedWOut,
             float[] bOut, float[] convertedWeights, float[] convertedBiases, float[] input);
+
+    private TensorFlowInferenceInterface mInferenceInterface;
+
+    public void setInferenceInterface(
+            TensorFlowInferenceInterface inferenceInterface) {
+        mInferenceInterface = inferenceInterface;
+    }
+
+    private int predictTF(float[][] x) {
+        int timeSteps = x.length;
+        float[] convertedX = alter2Dto1D(x);
+        mInferenceInterface.feed("input", convertedX, 1, inDim, timeSteps);
+        mInferenceInterface.run(new String[]{"output"});
+        float[] labelProb = new float[outDim];
+        mInferenceInterface.fetch("output", labelProb);
+
+        return DataUtil.argmax(labelProb) + 1;
+    }
 }

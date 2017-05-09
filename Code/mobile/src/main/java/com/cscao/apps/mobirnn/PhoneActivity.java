@@ -1,5 +1,6 @@
 package com.cscao.apps.mobirnn;
 
+import static com.cscao.apps.mobirnn.helper.Util.MODEL;
 import static com.cscao.apps.mobirnn.helper.Util.getInputData;
 import static com.cscao.apps.mobirnn.helper.Util.getLabels;
 import static com.cscao.apps.mobirnn.helper.Util.getTimestampString;
@@ -26,6 +27,8 @@ import android.widget.ToggleButton;
 import com.cscao.apps.mobirnn.helper.Util;
 import com.cscao.apps.mobirnn.model.Model;
 import com.orhanobut.logger.Logger;
+
+import org.tensorflow.contrib.android.TensorFlowInferenceInterface;
 
 import java.io.File;
 import java.io.IOException;
@@ -207,10 +210,19 @@ public class PhoneActivity extends Activity implements NumberPicker.OnValueChang
             try {
                 lstmModel = new Model(dataRootPath, mMODE);
                 publishProgress("0", "model loaded");
-                if (mMODE == Model.MODE.GPU) {
-                    RenderScript rs = RenderScript.create(getApplicationContext(),
-                            RenderScript.ContextType.NORMAL);
-                    lstmModel.setRs(rs);
+                switch (mMODE) {
+                    case GPU:
+                        RenderScript rs = RenderScript.create(getApplicationContext(),
+                                RenderScript.ContextType.NORMAL);
+                        lstmModel.setRs(rs);
+                        break;
+                    case NATIVE:
+                        TensorFlowInferenceInterface tfInference =
+                                new TensorFlowInferenceInterface(getAssets(), MODEL);
+                        lstmModel.setInferenceInterface(tfInference);
+                        break;
+                    default:
+
                 }
             } catch (IOException e) {
                 Logger.e("model cannot be created");
