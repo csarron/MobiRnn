@@ -5,7 +5,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.3.1'
+        classpath "com.android.tools.build:gradle:2.3.1"
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
@@ -16,8 +16,70 @@ allprojects {
     repositories {
         jcenter()
     }
+    repositories {
+        jcenter()
+        maven { url "https://jitpack.io" }
+    }
 }
 
 task clean(type: Delete) {
     delete rootProject.buildDir
+}
+
+ext {
+    //version
+    sdk = 25
+    tools = "25.0.2"
+    minApi = 21
+    targetApi = 24
+    versionName = "0.9.0"
+
+    wear = "1.4.0"
+    gmswear = "0.94.1"
+    log = "1.15"
+    ioutil = "2.4"
+    kryo = "4.0.0"
+    rxandroid = "1.2.1"
+    rxjava = "1.2.2"
+    junit = "4.12"
+    testrunner = "0.5"
+    mockito = "1.10.19"
+    robolectric = "3.1.4"
+
+    id = "com.cscao.apps.mobirnn"
+    abi = "armeabi-v7a,arm64-v8a"
+    cppFlags = "-std=c++11 -frtti -fexceptions"
+    testInst = "android.support.test.runner.AndroidJUnitRunner"
+
+    android = [
+            compileSdkVersion        : sdk,
+            buildToolsVersion        : tools,
+
+            applicationId            : id,
+            minSdkVersion            : minApi,
+            targetSdkVersion         : targetApi,
+            versionCode              : versionName.split("\\.")[0].toInteger() + 1,
+            versionName              : versionName,
+            testInstrumentationRunner: testInst,
+            cppFlags                 : cppFlags,
+            abiFilters               : abi.split(",")
+    ]
+
+    dependencies = [
+            "logger"     : "com.orhanobut:logger:${log}",
+            "ioutil"     : "commons-io:commons-io:${ioutil}",
+            "kryo"       : "com.esotericsoftware:kryo:${kryo}",
+            "tensorflow" : files("libs/libandroid_tensorflow_inference_java.jar"),
+
+            "rxandroid"  : "io.reactivex:rxandroid:${rxandroid}",
+            "rxjava"     : "io.reactivex:rxjava:${rxjava}",
+            "wearable"   : "com.google.android.support:wearable:${wear}",
+            "gmswear"    : "com.github.csarron:GmsWear:${gmswear}",
+
+            "junit"      : "junit:junit:${junit}",
+            "testrunner" : "com.android.support.test:runner:${testrunner}",
+            "testrules"  : "com.android.support.test:rules:${testrunner}",
+            "mockito"    : "org.mockito:mockito-core:${mockito}",
+            "robolectric": "org.robolectric:robolectric:${robolectric}",
+    ]
 }
