@@ -1,12 +1,12 @@
 package com.cscao.apps.mobirnn;
 
-import static com.cscao.apps.mobirnn.model.DataUtil.sigmoid;
-import static com.cscao.apps.mobirnn.model.DataUtil.tanh;
+import static com.cscao.apps.mobirnn.helper.DataUtil.sigmoid;
+import static com.cscao.apps.mobirnn.helper.DataUtil.tanh;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import com.cscao.apps.mobirnn.model.DataUtil;
+import com.cscao.apps.mobirnn.helper.DataUtil;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;

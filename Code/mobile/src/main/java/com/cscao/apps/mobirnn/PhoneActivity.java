@@ -1,6 +1,5 @@
 package com.cscao.apps.mobirnn;
 
-import static com.cscao.apps.mobirnn.helper.Util.MODEL;
 import static com.cscao.apps.mobirnn.helper.Util.getInputData;
 import static com.cscao.apps.mobirnn.helper.Util.getLabels;
 import static com.cscao.apps.mobirnn.helper.Util.getTimestampString;
@@ -10,7 +9,6 @@ import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.renderscript.RenderScript;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -26,9 +24,8 @@ import android.widget.ToggleButton;
 
 import com.cscao.apps.mobirnn.helper.Util;
 import com.cscao.apps.mobirnn.model.Model;
+import com.cscao.apps.mobirnn.model.ModelMode;
 import com.orhanobut.logger.Logger;
-
-import org.tensorflow.contrib.android.TensorFlowInferenceInterface;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,7 +45,7 @@ public class PhoneActivity extends Activity implements NumberPicker.OnValueChang
 
     private Task mTask;
     private long mSeed;
-    private Model.MODE mRunMode = Model.MODE.GPU;
+    private ModelMode mRunMode = ModelMode.TensorFlow;
     private int mSampleSize;
     final String[] mSampleSizes = {"1", "10", "50", "100", "200", "500"};
 
@@ -107,19 +104,19 @@ public class PhoneActivity extends Activity implements NumberPicker.OnValueChang
     public void onRadioButtonClicked(View view) {
         switch (view.getId()) {
             case R.id.radio_cpu:
-                mRunMode = Model.MODE.CPU;
+                mRunMode = ModelMode.CPU;
                 Logger.d("selected cpu mode");
                 break;
             case R.id.radio_gpu:
-                mRunMode = Model.MODE.GPU;
+                mRunMode = ModelMode.GPU;
                 Logger.d("selected gpu mode");
                 break;
-            case R.id.radio_native:
-                mRunMode = Model.MODE.NATIVE;
-                Logger.d("selected native mode");
+            case R.id.radio_tf:
+                mRunMode = ModelMode.TensorFlow;
+                Logger.d("selected tensorflow mode");
                 break;
             default:
-                mRunMode = Model.MODE.GPU;
+                mRunMode = ModelMode.TensorFlow;
         }
     }
 
@@ -127,7 +124,7 @@ public class PhoneActivity extends Activity implements NumberPicker.OnValueChang
         if (controlToggle.isChecked()) {
             mStatusTextView.setText("");
             mTask = new Task();
-            mTask.mMODE = mRunMode;
+            mTask.mMode = mRunMode;
             mTask.mSampleSize = mSampleSize;
             mTask.mSeed = mSeed;
 
@@ -164,7 +161,7 @@ public class PhoneActivity extends Activity implements NumberPicker.OnValueChang
 
     private class Task extends AsyncTask<String, String, Pair<Float, Float>> {
 
-        private Model.MODE mMODE;
+        private ModelMode mMode;
         private int mSampleSize;
         private long mSeed;
 
@@ -201,35 +198,14 @@ public class PhoneActivity extends Activity implements NumberPicker.OnValueChang
         @Override
         protected Pair<Float, Float> doInBackground(String... params) {
             String dataRootPath = params[0];
-            Model lstmModel = null;
             Log.d("run", "begin model loading");
             if (!new File(dataRootPath).exists()) {
                 publishProgress("-1", "model and data not exist!");
                 this.cancel(true);
             }
-            try {
-                lstmModel = new Model(dataRootPath, mMODE);
-                publishProgress("0", "model loaded");
-                switch (mMODE) {
-                    case GPU:
-                        RenderScript rs = RenderScript.create(getApplicationContext(),
-                                RenderScript.ContextType.NORMAL);
-                        lstmModel.setRs(rs);
-                        break;
-                    case NATIVE:
-                        TensorFlowInferenceInterface tfInference =
-                                new TensorFlowInferenceInterface(getAssets(), MODEL);
-                        lstmModel.setInferenceInterface(tfInference);
-                        break;
-                    default:
+            Model model = new Model(getApplicationContext(), mMode, 2, 32);
 
-                }
-            } catch (IOException e) {
-                Logger.e("model cannot be created");
-                e.printStackTrace();
-                publishProgress("-1", "model cannot be created");
-                this.cancel(true);
-            }
+            publishProgress("0", "model loaded");
             Log.d("run", "model created");
 
             int[] indices = new int[0];
@@ -268,8 +244,7 @@ public class PhoneActivity extends Activity implements NumberPicker.OnValueChang
                 if (this.isCancelled()) {
                     break;
                 }
-                assert lstmModel != null;
-                predictedLabels[i] = lstmModel.predict(inputs[i]);
+                predictedLabels[i] = model.predict(inputs[i]);
                 boolean isCorrect = (predictedLabels[i] == labels[i]);
                 if (isCorrect) {
                     correct++;
@@ -291,7 +266,7 @@ public class PhoneActivity extends Activity implements NumberPicker.OnValueChang
         @Override
         protected void onPreExecute() {
             String mode = String.format(Locale.US,
-                    "running model in %s mode\n", mMODE.toString());
+                    "running model in %s mode\n", mMode.toString());
             mStatusTextView.append(mode);
 
             String info = String.format(Locale.US,

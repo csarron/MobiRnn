@@ -45,7 +45,7 @@ ext {
     testrunner = "0.5"
     mockito = "1.10.19"
     robolectric = "3.1.4"
-
+    nd4j = "0.8.0"
     id = "com.cscao.apps.mobirnn"
     abi = "armeabi-v7a,arm64-v8a"
     cppFlags = "-std=c++11 -frtti -fexceptions"
@@ -70,6 +70,8 @@ ext {
             "ioutil"     : "commons-io:commons-io:${ioutil}",
             "kryo"       : "com.esotericsoftware:kryo:${kryo}",
             "tensorflow" : files("libs/libandroid_tensorflow_inference_java.jar"),
+            "nd4j"       : "org.nd4j:nd4j-native:${nd4j}",
+            "nd4jnative"       : "org.nd4j:nd4j-native:${nd4j}:android-arm",
 
             "rxandroid"  : "io.reactivex:rxandroid:${rxandroid}",
             "rxjava"     : "io.reactivex:rxjava:${rxjava}",

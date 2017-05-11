@@ -11,5 +11,5 @@
     <string name="task_cancelled">Running task cancelled</string>
     <string name="prediction_size">Prediction Size:</string>
     <string name="seed_changed">sample seed changed</string>
-    <string name="native_cpu">CPU(Native)</string>
+    <string name="tensorflow">TensorFlow</string>
 </resources>

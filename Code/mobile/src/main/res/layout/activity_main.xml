@@ -37,11 +37,11 @@
                 android:text="@string/cpu" />
 
             <RadioButton
-                android:id="@+id/radio_native"
+                android:id="@+id/radio_tf"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:onClick="onRadioButtonClicked"
-                android:text="@string/native_cpu" />
+                android:text="@string/tensorflow" />
 
             <RadioButton
                 android:id="@+id/radio_gpu"

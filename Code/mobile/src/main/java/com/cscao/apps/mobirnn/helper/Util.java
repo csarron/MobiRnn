@@ -1,7 +1,7 @@
 package com.cscao.apps.mobirnn.helper;
 
-import static com.cscao.apps.mobirnn.model.DataUtil.parseInputData;
-import static com.cscao.apps.mobirnn.model.DataUtil.parseLabel;
+import static com.cscao.apps.mobirnn.helper.DataUtil.parseInputData;
+import static com.cscao.apps.mobirnn.helper.DataUtil.parseLabel;
 
 import android.os.Environment;
 
