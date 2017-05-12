@@ -20,7 +20,6 @@ class CpuModel extends AbstractModel {
     private float[][] mWIn;
     private float[][] mWOut;
     private float[][][] mWeights;
-    private float[][] mBiases;
 
     CpuModel(Context context, int layerSize, int hiddenUnits) {
         super(context, layerSize, hiddenUnits);
@@ -43,14 +42,9 @@ class CpuModel extends AbstractModel {
         mWeights = new float[mLayerSize][mHiddenUnits * 2][mHiddenUnits * 4];
         for (int k = 0; k < mLayerSize; k++) {
             for (int i = 0; i < mHiddenUnits * 2; i++) {
-                System.arraycopy(super.mRnnWeights[k], i * mHiddenUnits * 2, mWeights[k][i], 0,
+                System.arraycopy(super.mRnnWeights[k], i * mHiddenUnits * 4, mWeights[k][i], 0,
                         mHiddenUnits * 4);
             }
-        }
-
-        mBiases = new float[mLayerSize][mHiddenUnits * 4];
-        for (int i = 0; i < mLayerSize; i++) {
-            System.arraycopy(super.mRnnBiases[i], 0, mBiases[i], 0, mHiddenUnits * 4);
         }
     }
 
@@ -58,7 +52,7 @@ class CpuModel extends AbstractModel {
         // concat in_ and h_ and do xw_plu_b
         float[] concat = Matrix.concat(in_, h_);
         float[] linearResult = Matrix.vecAddVec(Matrix.vecMulMat(concat, mWeights[layer]),
-                mBiases[layer]);
+                mRnnBiases[layer]);
         float[] i = Matrix.split(linearResult, 4, 0);
         float[] j = Matrix.split(linearResult, 4, 1);
         float[] f = Matrix.split(linearResult, 4, 2);
