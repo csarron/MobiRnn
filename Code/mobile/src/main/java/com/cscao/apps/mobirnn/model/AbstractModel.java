@@ -21,7 +21,8 @@ public abstract class AbstractModel {
             "rnn/multi_rnn_cell/cell_%d/basic_lstm_cell/weights";
     private static final String mRnnBiaseTemplate =
             "rnn/multi_rnn_cell/cell_%d/basic_lstm_cell/biases";
-    private final int mActivationWeightSize = mActivationWeightNames.length;
+    final int mOutputDim = 6;
+    final int mInputDim = 9;
 
     private String[] mRnnWeightNames;
     private String[] mRnnBiaseNames;
@@ -32,12 +33,8 @@ public abstract class AbstractModel {
     int mLayerSize;
     int mHiddenUnits;
 
-    private float[][] mActivationParams;
     float[][] mRnnWeights;
     float[][] mRnnBiases;
-
-    int mInputDim;
-    int mOutputDim;
 
     float[] mWIn;
     float[] mBIn;
@@ -56,7 +53,6 @@ public abstract class AbstractModel {
         mTensorFlowInferenceInterface = new TensorFlowInferenceInterface(mContext.getAssets(),
                 String.format(Locale.US, mModelNameTemplate, mLayerSize, mHiddenUnits));
 
-        mActivationParams = new float[mActivationWeightSize][];
         mRnnWeights = new float[mLayerSize][];
         mRnnBiases = new float[mLayerSize][];
         mRnnWeightNames = new String[mLayerSize];
@@ -66,33 +62,33 @@ public abstract class AbstractModel {
     private void loadModel() {
         //prepareRnnWeightNames
         for (int i = 0; i < mLayerSize; i++) {
-            mRnnWeightNames[i] = String.format(Locale.US, mRnnWeightTemplate, mLayerSize);
-            mRnnBiaseNames[i] = String.format(Locale.US, mRnnBiaseTemplate, mLayerSize);
+            mRnnWeightNames[i] = String.format(Locale.US, mRnnWeightTemplate, i);
+            mRnnBiaseNames[i] = String.format(Locale.US, mRnnBiaseTemplate, i);
         }
-
-        //fake input data
-        float[] convertedX = new float[mInputDim*128];
-        mTensorFlowInferenceInterface.feed("input", convertedX, 1, mInputDim, 128);
 
         mTensorFlowInferenceInterface.run(mActivationWeightNames);
-        for (int i = 0; i < mActivationWeightSize; i++) {
-            mTensorFlowInferenceInterface.fetch(mActivationWeightNames[i], mActivationParams[i]);
-        }
+
+        mWIn = new float[mInputDim * mHiddenUnits];
+        mBIn = new float[mHiddenUnits];
+        mWOut = new float[mOutputDim * mHiddenUnits];
+        mBOut = new float[mOutputDim];
+
+        mTensorFlowInferenceInterface.fetch(mActivationWeightNames[0], mWIn);
+        mTensorFlowInferenceInterface.fetch(mActivationWeightNames[1], mBIn);
+        mTensorFlowInferenceInterface.fetch(mActivationWeightNames[2], mWOut);
+        mTensorFlowInferenceInterface.fetch(mActivationWeightNames[3], mBOut);
 
         mTensorFlowInferenceInterface.run(mRnnWeightNames);
-        mTensorFlowInferenceInterface.run(mRnnBiaseNames);
         for (int i = 0; i < mLayerSize; i++) {
+            mRnnWeights[i] = new float[2 * mHiddenUnits * 4 * mHiddenUnits];
             mTensorFlowInferenceInterface.fetch(mRnnWeightNames[i], mRnnWeights[i]);
-            mTensorFlowInferenceInterface.fetch(mRnnBiaseNames[i], mRnnBiases[i]);
         }
 
-        mInputDim = mActivationParams[0].length; // input dimension is w_in 1st dimension
-        mOutputDim = mActivationParams[3].length; // output dimension is b_out length
-
-        mWIn = mActivationParams[0];
-        mBIn = mActivationParams[1];
-        mWOut = mActivationParams[2];
-        mBOut = mActivationParams[3];
+        mTensorFlowInferenceInterface.run(mRnnBiaseNames);
+        for (int i = 0; i < mLayerSize; i++) {
+            mRnnBiases[i] = new float[4 * mHiddenUnits];
+            mTensorFlowInferenceInterface.fetch(mRnnBiaseNames[i], mRnnBiases[i]);
+        }
     }
 
     protected abstract int predictLabel(float[][] x);

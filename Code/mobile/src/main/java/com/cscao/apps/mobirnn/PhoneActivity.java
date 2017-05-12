@@ -203,7 +203,7 @@ public class PhoneActivity extends Activity implements NumberPicker.OnValueChang
                 publishProgress("-1", "model and data not exist!");
                 this.cancel(true);
             }
-            Model model = new Model(getApplicationContext(), mMode, 2, 32);
+            Model model = new Model(getApplicationContext(), mMode, 2, 64);
 
             publishProgress("0", "model loaded");
             Log.d("run", "model created");
