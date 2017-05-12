@@ -1,10 +1,50 @@
 #include <jni.h>
 #include <string>
-#include "math.h"
+#include <Eigen/Dense>
 
 #define LOG(...) \
   ((void)__android_log_print(ANDROID_LOG_INFO, "mobirnn::", __VA_ARGS__))
 
+
+JNIEXPORT jobjectArray JNICALL
+Java_com_cscao_apps_mobirnn_helper_MatrixEigen_addVec(JNIEnv *env, jclass type, jobjectArray m,
+                                                      jfloatArray v_) {
+    jfloat *v = env->GetFloatArrayElements(v_, NULL);
+
+    // TODO
+
+    env->ReleaseFloatArrayElements(v_, v, 0);
+}
+
+JNIEXPORT jfloatArray JNICALL
+Java_com_cscao_apps_mobirnn_helper_MatrixEigen_vecAddVec(JNIEnv *env, jclass type, jfloatArray a_,
+                                                         jfloatArray b_) {
+    jfloat *a = env->GetFloatArrayElements(a_, NULL);
+    jfloat *b = env->GetFloatArrayElements(b_, NULL);
+
+    // TODO
+
+    env->ReleaseFloatArrayElements(a_, a, 0);
+    env->ReleaseFloatArrayElements(b_, b, 0);
+}
+
+JNIEXPORT jobjectArray JNICALL
+Java_com_cscao_apps_mobirnn_helper_MatrixEigen_multiply(JNIEnv *env, jclass type, jobjectArray a,
+                                                        jobjectArray b) {
+
+    // TODO
+
+}
+
+JNIEXPORT jfloatArray JNICALL
+Java_com_cscao_apps_mobirnn_helper_MatrixEigen_vecMulMat(JNIEnv *env, jclass type, jfloatArray x_,
+                                                         jobjectArray a) {
+    jfloat *x = env->GetFloatArrayElements(x_, NULL);
+
+    // TODO
+
+    env->ReleaseFloatArrayElements(x_, x, 0);
+}
 
 extern "C"
 JNIEXPORT jint JNICALL

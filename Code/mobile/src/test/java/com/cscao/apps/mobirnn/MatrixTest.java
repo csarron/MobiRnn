@@ -2,7 +2,7 @@ package com.cscao.apps.mobirnn;
 
 import static org.junit.Assert.assertTrue;
 
-import com.cscao.apps.mobirnn.model.Matrix;
+import com.cscao.apps.mobirnn.helper.Matrix;
 
 import org.junit.Test;
 
@@ -14,21 +14,6 @@ import java.util.Arrays;
  * Matrix tests
  */
 public class MatrixTest {
-
-    @Test
-    public void transpose() throws Exception {
-        float[][] a = {{1, 2, 3}, {4, 5, 6}};
-        float[][] b = {{1, 4}, {2, 5}, {3, 6}};
-        assertTrue(Arrays.deepEquals(Matrix.transpose(a), b));
-    }
-
-    @Test
-    public void add() throws Exception {
-        float[][] a = {{1, 2, 3}, {4, 5, 6}};
-        float[][] b = {{7, 8, 9}, {10, 11, 12}};
-        float[][] c = {{8, 10, 12}, {14, 16, 18}};
-        assertTrue(Arrays.deepEquals(Matrix.add(a, b), c));
-    }
 
     @Test
     public void addVec() throws Exception {

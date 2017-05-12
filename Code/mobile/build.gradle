@@ -80,8 +80,6 @@ dependencies {
     compile rootProject.ext.dependencies["logger"]
     compile rootProject.ext.dependencies["kryo"]
     compile rootProject.ext.dependencies["tensorflow"]
-//    compile rootProject.ext.dependencies["nd4j"]
-//    compile rootProject.ext.dependencies["nd4jnative"]
 
     testCompile rootProject.ext.dependencies["junit"]
 }

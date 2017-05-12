@@ -1,4 +1,4 @@
-package com.cscao.apps.mobirnn.model;
+package com.cscao.apps.mobirnn.helper;
 
 /**
  * Created by qqcao on 4/6/17
@@ -6,32 +6,6 @@ package com.cscao.apps.mobirnn.model;
  * collection of static methods for matrix operations
  */
 public class Matrix {
-
-    // return B = A^T
-    public static float[][] transpose(float[][] a) {
-        int m = a.length;
-        int n = a[0].length;
-        float[][] b = new float[n][m];
-        for (int i = 0; i < m; i++) {
-            for (int j = 0; j < n; j++) {
-                b[j][i] = a[i][j];
-            }
-        }
-        return b;
-    }
-
-    // return c = a + b
-    public static float[][] add(float[][] a, float[][] b) {
-        int m = a.length;
-        int n = a[0].length;
-        float[][] c = new float[m][n];
-        for (int i = 0; i < m; i++) {
-            for (int j = 0; j < n; j++) {
-                c[i][j] = a[i][j] + b[i][j];
-            }
-        }
-        return c;
-    }
 
     public static float[][] addVec(float[][] m, float[] v) {
         float[][] r = new float[m.length][];

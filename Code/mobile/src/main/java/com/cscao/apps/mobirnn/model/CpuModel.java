@@ -3,6 +3,7 @@ package com.cscao.apps.mobirnn.model;
 import android.content.Context;
 
 import com.cscao.apps.mobirnn.helper.DataUtil;
+import com.cscao.apps.mobirnn.helper.Matrix;
 
 import java.util.Arrays;
 
