@@ -99,12 +99,12 @@ class GpuModel extends AbstractModel {
         Type weightType = Type.createXYZ(mRs, Element.F32(mRs),
                 mHiddenUnits * 4, mHiddenUnits * 2, mLayerSize);
         Allocation weightAlloc = Allocation.createTyped(mRs, weightType);
-        weightAlloc.copyFrom(mRnnWeights);
+        weightAlloc.copyFrom(alter2Dto1D(mRnnWeights));
         scriptC_main.set_weights(weightAlloc);
 
         Type biasType = Type.createXY(mRs, Element.F32(mRs), mHiddenUnits * 4, mLayerSize);
         Allocation biasAlloc = Allocation.createTyped(mRs, biasType);
-        biasAlloc.copyFrom(mRnnBiases);
+        biasAlloc.copyFrom(alter2Dto1D(mRnnBiases));
         scriptC_main.set_biases(biasAlloc);
     }
 
