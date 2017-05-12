@@ -71,7 +71,7 @@ ext {
             "kryo"       : "com.esotericsoftware:kryo:${kryo}",
             "tensorflow" : files("libs/libandroid_tensorflow_inference_java.jar"),
             "nd4j"       : "org.nd4j:nd4j-native:${nd4j}",
-            "nd4jnative"       : "org.nd4j:nd4j-native:${nd4j}:android-arm",
+            "nd4jnative" : "org.nd4j:nd4j-native:${nd4j}:android-arm",
 
             "rxandroid"  : "io.reactivex:rxandroid:${rxandroid}",
             "rxjava"     : "io.reactivex:rxjava:${rxjava}",

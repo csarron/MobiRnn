@@ -1,11 +1,55 @@
 #include <jni.h>
 #include <string>
 #include <Eigen/Dense>
+#include <math.h>
 
 #define LOG(...) \
   ((void)__android_log_print(ANDROID_LOG_INFO, "mobirnn::", __VA_ARGS__))
+float sigmoid(float x) {
+    return 1 / (1 + expf(-x));
+}
 
+int argmax(float* x, int len) {
+    int max = 0;
+    float a = 0.0f;
+    for (int i = 0; i < len; i++) {
+        if (x[i] > a) {
+            a = x[i];
+            max = i;
+        }
+    }
+    return max;
+}
 
+JNIEXPORT jint JNICALL
+Java_com_cscao_apps_mobirnn_model_CpuModel_predictNative(JNIEnv *env, jobject instance,
+                                                         jfloatArray input_, jintArray config_,
+                                                         jfloatArray wIn_, jfloatArray bIn_,
+                                                         jfloatArray wOut_, jfloatArray bOut_,
+                                                         jfloatArray weights_,
+                                                         jfloatArray biases_) {
+    jfloat *input = env->GetFloatArrayElements(input_, NULL);
+    jint *config = env->GetIntArrayElements(config_, NULL);
+    jfloat *wIn = env->GetFloatArrayElements(wIn_, NULL);
+    jfloat *bIn = env->GetFloatArrayElements(bIn_, NULL);
+    jfloat *wOut = env->GetFloatArrayElements(wOut_, NULL);
+    jfloat *bOut = env->GetFloatArrayElements(bOut_, NULL);
+    jfloat *weights = env->GetFloatArrayElements(weights_, NULL);
+    jfloat *biases = env->GetFloatArrayElements(biases_, NULL);
+
+    // TODO
+
+    env->ReleaseFloatArrayElements(input_, input, 0);
+    env->ReleaseIntArrayElements(config_, config, 0);
+    env->ReleaseFloatArrayElements(wIn_, wIn, 0);
+    env->ReleaseFloatArrayElements(bIn_, bIn, 0);
+    env->ReleaseFloatArrayElements(wOut_, wOut, 0);
+    env->ReleaseFloatArrayElements(bOut_, bOut, 0);
+    env->ReleaseFloatArrayElements(weights_, weights, 0);
+    env->ReleaseFloatArrayElements(biases_, biases, 0);
+}
+
+extern "C"
 JNIEXPORT jobjectArray JNICALL
 Java_com_cscao_apps_mobirnn_helper_MatrixEigen_addVec(JNIEnv *env, jclass type, jobjectArray m,
                                                       jfloatArray v_) {
@@ -16,6 +60,7 @@ Java_com_cscao_apps_mobirnn_helper_MatrixEigen_addVec(JNIEnv *env, jclass type, 
     env->ReleaseFloatArrayElements(v_, v, 0);
 }
 
+extern "C"
 JNIEXPORT jfloatArray JNICALL
 Java_com_cscao_apps_mobirnn_helper_MatrixEigen_vecAddVec(JNIEnv *env, jclass type, jfloatArray a_,
                                                          jfloatArray b_) {
@@ -28,6 +73,7 @@ Java_com_cscao_apps_mobirnn_helper_MatrixEigen_vecAddVec(JNIEnv *env, jclass typ
     env->ReleaseFloatArrayElements(b_, b, 0);
 }
 
+extern "C"
 JNIEXPORT jobjectArray JNICALL
 Java_com_cscao_apps_mobirnn_helper_MatrixEigen_multiply(JNIEnv *env, jclass type, jobjectArray a,
                                                         jobjectArray b) {
@@ -36,6 +82,7 @@ Java_com_cscao_apps_mobirnn_helper_MatrixEigen_multiply(JNIEnv *env, jclass type
 
 }
 
+extern "C"
 JNIEXPORT jfloatArray JNICALL
 Java_com_cscao_apps_mobirnn_helper_MatrixEigen_vecMulMat(JNIEnv *env, jclass type, jfloatArray x_,
                                                          jobjectArray a) {

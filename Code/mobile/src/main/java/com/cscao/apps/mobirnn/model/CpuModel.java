@@ -1,5 +1,7 @@
 package com.cscao.apps.mobirnn.model;
 
+import static com.cscao.apps.mobirnn.helper.DataUtil.alter2Dto1D;
+
 import android.content.Context;
 
 import com.cscao.apps.mobirnn.helper.DataUtil;
@@ -93,12 +95,15 @@ class CpuModel extends AbstractModel {
         return DataUtil.argmax(outProb) + 1;
     }
 
-    //    private int predictNativeCpu(float[][] x) {
-//        int timeSteps = x.length;
-//        float[] inputs = alter2Dto1D(x);
-//        return predictNative(mLayerSize, timeSteps, mHiddenUnits, inDim, outDim, convertedWIn,
-// b_in,
-//                convertedWOut, b_out, convertedWeights, convertedBiases, inputs);
-//
-//    }
+    private int predictNativeCpu(float[][] x) {
+        int timeSteps = x.length;
+        float[] inputs = alter2Dto1D(x);
+        return predictNative(inputs,
+                new int[]{mLayerSize, timeSteps, mHiddenUnits, mInputDim, mOutputDim}, super.mWIn,
+                mBIn, super.mWOut, mBOut, alter2Dto1D(super.mRnnWeights), alter2Dto1D(mRnnBiases));
+
+    }
+
+    public native int predictNative(float[] input, int[] config, float[] wIn, float[] bIn,
+            float[] wOut, float[] bOut, float[] weights, float[] biases);
 }
