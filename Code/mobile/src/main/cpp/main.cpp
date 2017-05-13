@@ -50,56 +50,12 @@ Java_com_cscao_apps_mobirnn_model_CpuModel_predictNative(JNIEnv *env, jobject in
 }
 
 extern "C"
-JNIEXPORT jobjectArray JNICALL
-Java_com_cscao_apps_mobirnn_helper_MatrixEigen_addVec(JNIEnv *env, jclass type, jobjectArray m,
-                                                      jfloatArray v_) {
-    jfloat *v = env->GetFloatArrayElements(v_, NULL);
-
-    // TODO
-
-    env->ReleaseFloatArrayElements(v_, v, 0);
-}
-
-extern "C"
-JNIEXPORT jfloatArray JNICALL
-Java_com_cscao_apps_mobirnn_helper_MatrixEigen_vecAddVec(JNIEnv *env, jclass type, jfloatArray a_,
-                                                         jfloatArray b_) {
-    jfloat *a = env->GetFloatArrayElements(a_, NULL);
-    jfloat *b = env->GetFloatArrayElements(b_, NULL);
-
-    // TODO
-
-    env->ReleaseFloatArrayElements(a_, a, 0);
-    env->ReleaseFloatArrayElements(b_, b, 0);
-}
-
-extern "C"
-JNIEXPORT jobjectArray JNICALL
-Java_com_cscao_apps_mobirnn_helper_MatrixEigen_multiply(JNIEnv *env, jclass type, jobjectArray a,
-                                                        jobjectArray b) {
-
-    // TODO
-
-}
-
-extern "C"
-JNIEXPORT jfloatArray JNICALL
-Java_com_cscao_apps_mobirnn_helper_MatrixEigen_vecMulMat(JNIEnv *env, jclass type, jfloatArray x_,
-                                                         jobjectArray a) {
-    jfloat *x = env->GetFloatArrayElements(x_, NULL);
-
-    // TODO
-
-    env->ReleaseFloatArrayElements(x_, x, 0);
-}
-
-extern "C"
 JNIEXPORT jint JNICALL
 Java_com_cscao_apps_mobirnn_model_Model_predictNative(JNIEnv *env, jobject instance,
                                                       jint layer_size,
                                                       jint time_steps, jint hidden_unites,
                                                       jint in_dim,
-                                                      jint out_dim, jfloatArray convertedWIn_,
+                                                      jint out_dim, jfloatArray wIn_,
                                                       jfloatArray bIn_, jfloatArray convertedWOut_,
                                                       jfloatArray bOut_,
                                                       jfloatArray convertedWeights_,
@@ -107,7 +63,7 @@ Java_com_cscao_apps_mobirnn_model_Model_predictNative(JNIEnv *env, jobject insta
                                                       jfloatArray input_) {
 
 
-    jfloat *w_in = env->GetFloatArrayElements(convertedWIn_, NULL);
+    jfloat *w_in = env->GetFloatArrayElements(wIn_, NULL);
     jfloat *b_in = env->GetFloatArrayElements(bIn_, NULL);
     jfloat *w_out = env->GetFloatArrayElements(convertedWOut_, NULL);
     jfloat *b_out = env->GetFloatArrayElements(bOut_, NULL);
@@ -212,7 +168,7 @@ Java_com_cscao_apps_mobirnn_model_Model_predictNative(JNIEnv *env, jobject insta
     free(linear_result);
     free(label_prob);
 
-    env->ReleaseFloatArrayElements(convertedWIn_, w_in, 0);
+    env->ReleaseFloatArrayElements(wIn_, w_in, 0);
     env->ReleaseFloatArrayElements(bIn_, b_in, 0);
     env->ReleaseFloatArrayElements(convertedWOut_, w_out, 0);
     env->ReleaseFloatArrayElements(bOut_, b_out, 0);

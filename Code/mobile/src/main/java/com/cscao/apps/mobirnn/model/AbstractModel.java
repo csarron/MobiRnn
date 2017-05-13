@@ -12,11 +12,11 @@ import java.util.Locale;
  * LSTM AbstractModel abstract class
  */
 
-public abstract class AbstractModel {
+abstract class AbstractModel {
 
     private static final String[] mActivationWeightNames = /* order matters*/
             {"w_in", "b_in", "w_out", "b_out"};
-    private static final String mModelNameTemplate = "%d_layer_%d_units.pb";
+    private static final String mModelNameTemplate = "%dlayer%dunits.pb";
     private static final String mRnnWeightTemplate =
             "rnn/multi_rnn_cell/cell_%d/basic_lstm_cell/weights";
     private static final String mRnnBiaseTemplate =
