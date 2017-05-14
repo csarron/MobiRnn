@@ -1,0 +1,67 @@
+apply plugin: 'com.android.application'
+
+def keystorePropertiesFile = rootProject.file("local.properties")
+def keystoreProperties = new Properties()
+keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+
+android {
+    compileSdkVersion rootProject.ext.android.compileSdkVersion
+    buildToolsVersion rootProject.ext.android.buildToolsVersion
+    defaultConfig {
+        minSdkVersion rootProject.ext.android.minSdkVersion
+        targetSdkVersion rootProject.ext.android.targetSdkVersion
+        versionCode rootProject.ext.android.versionCode
+        versionName rootProject.ext.android.versionName
+        testInstrumentationRunner rootProject.ext.android.testInstrumentationRunner
+        externalNativeBuild {
+            cmake {
+                cppFlags rootProject.ext.android.cppFlags
+                abiFilters rootProject.ext.android.abiFilters
+            }
+        }
+    }
+
+    signingConfigs {
+        release {
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+            storeFile file(keystoreProperties['storeFile'])
+            storePassword keystoreProperties['storePassword']
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    externalNativeBuild {
+        cmake {
+            path "src/main/cpp/CMakeLists.txt"
+        }
+    }
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['../libs']
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    //wearApp project(':wear')
+    compile rootProject.ext.dependencies["wearable"]
+    compile rootProject.ext.dependencies["gmswear"]
+    compile rootProject.ext.dependencies["ioutil"]
+    compile rootProject.ext.dependencies["logger"]
+    compile rootProject.ext.dependencies["kryo"]
+    compile rootProject.ext.dependencies["tensorflow"]
+
+    testCompile rootProject.ext.dependencies["junit"]
+}
