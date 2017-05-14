@@ -47,7 +47,7 @@ ext {
     robolectric = "3.1.4"
     nd4j = "0.8.0"
     id = "com.cscao.apps.mobirnn"
-    abi = "armeabi-v7a,arm64-v8a"
+    abi = "armeabi-v7a,arm64-v8a,x86_64"
     cppFlags = "-std=c++11 -frtti -fexceptions"
     testInst = "android.support.test.runner.AndroidJUnitRunner"
 
