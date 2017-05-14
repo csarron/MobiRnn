@@ -76,7 +76,10 @@ class CpuModel extends AbstractModel {
 
     @Override
     protected int predictLabel(float[][] x) {
+        return predictNativeCpu(x);
+    }
 
+    private int predictJava(float[][] x) {
         x = DataUtil.relu(Matrix.addVec(Matrix.multiply(x, mWIn), mBIn));
         float[] c = new float[mHiddenUnits];
         float[] h = new float[mHiddenUnits];
@@ -98,12 +101,21 @@ class CpuModel extends AbstractModel {
     private int predictNativeCpu(float[][] x) {
         int timeSteps = x.length;
         float[] inputs = alter2Dto1D(x);
-        return predictNative(inputs,
+//        return predictNative(mLayerSize, timeSteps, mHiddenUnits, mInputDim, mOutputDim, super.mWIn,
+//                mBIn, super.mWOut, mBOut, alter2Dto1D(super.mRnnWeights), alter2Dto1D(mRnnBiases),
+//                inputs);
+        return predictNativeEigen(inputs,
                 new int[]{mLayerSize, timeSteps, mHiddenUnits, mInputDim, mOutputDim}, super.mWIn,
                 mBIn, super.mWOut, mBOut, alter2Dto1D(super.mRnnWeights), alter2Dto1D(mRnnBiases));
 
     }
 
-    public native int predictNative(float[] input, int[] config, float[] wIn, float[] bIn,
+    public native int predictNativeEigen(float[] input, int[] config, float[] wIn, float[] bIn,
             float[] wOut, float[] bOut, float[] weights, float[] biases);
+
+    public native int predictNative(int layer_size,
+            int time_steps, int hidden_unites,
+            int in_dim,
+            int out_dim, float[] wIn, float[] bIn,
+            float[] wOut, float[] bOut, float[] weights, float[] biases, float[] input);
 }

@@ -35,12 +35,14 @@ int argMax(float *x, int len) {
     return max;
 }
 
+extern "C"
 JNIEXPORT jint JNICALL
-Java_com_cscao_apps_mobirnn_model_CpuModel_predictNative(JNIEnv *env, jfloatArray input_,
-                                                         jintArray config_, jfloatArray wIn_,
-                                                         jfloatArray bIn_, jfloatArray wOut_,
-                                                         jfloatArray bOut_, jfloatArray weights_,
-                                                         jfloatArray biases_) {
+Java_com_cscao_apps_mobirnn_model_CpuModel_predictNativeEigen(JNIEnv *env, jobject instance,
+                                                              jfloatArray input_, jintArray config_,
+                                                              jfloatArray wIn_, jfloatArray bIn_,
+                                                              jfloatArray wOut_, jfloatArray bOut_,
+                                                              jfloatArray weights_,
+                                                              jfloatArray biases_) {
     jfloat *input = env->GetFloatArrayElements(input_, NULL);
     jint *config = env->GetIntArrayElements(config_, NULL);
     jfloat *wIn = env->GetFloatArrayElements(wIn_, NULL);
@@ -122,7 +124,7 @@ Java_com_cscao_apps_mobirnn_model_CpuModel_predictNative(JNIEnv *env, jfloatArra
 
 extern "C"
 JNIEXPORT jint JNICALL
-Java_com_cscao_apps_mobirnn_model_Model_predictNative(JNIEnv *env,
+Java_com_cscao_apps_mobirnn_model_CpuModel_predictNative(JNIEnv *env, jobject  instance,
                                                       jint layer_size,
                                                       jint time_steps, jint hidden_unites,
                                                       jint in_dim,
