@@ -1,7 +1,5 @@
 package com.cscao.apps.mobirnn.model;
 
-import static com.cscao.apps.mobirnn.helper.DataUtil.alter2Dto1D;
-
 import android.content.Context;
 
 import com.cscao.apps.mobirnn.helper.DataUtil;
@@ -21,10 +19,8 @@ class TensorFlowModel extends AbstractModel {
     }
 
     @Override
-    protected int predictLabel(float[][] x) {
-        int timeSteps = x.length;
-        float[] convertedX = alter2Dto1D(x);
-        mTensorFlowInferenceInterface.feed(mInputNodeName, convertedX, 1, mInputDim, timeSteps);
+    protected int predictLabel(float[] x) {
+        mTensorFlowInferenceInterface.feed(mInputNodeName, x, 1, mInputDim, mTimeSteps);
         mTensorFlowInferenceInterface.run(new String[]{mOutputNodeName});
         float[] labelProb = new float[mOutputDim];
         mTensorFlowInferenceInterface.fetch(mOutputNodeName, labelProb);

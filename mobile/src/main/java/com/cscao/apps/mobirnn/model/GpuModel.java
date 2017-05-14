@@ -32,27 +32,24 @@ class GpuModel extends AbstractModel {
     }
 
     @Override
-    protected int predictLabel(float[][] x) {
+    protected int predictLabel(float[] x) {
         if (mRs == null) {
             return -1;
         }
 
-        int timeSteps = x.length;
-        float[] convertedX = alter2Dto1D(x);
-
-        scriptC_main.set_time_steps(timeSteps);
+        scriptC_main.set_time_steps(mTimeSteps);
         scriptC_main.set_in_dim(mInputDim);
         scriptC_main.set_hidden_unites(mHiddenUnits);
         scriptC_main.set_layer_size(mLayerSize);
 
         // initialize input raw data allocation
-        Type inRawType = Type.createXY(mRs, Element.F32(mRs), mInputDim, timeSteps);
+        Type inRawType = Type.createXY(mRs, Element.F32(mRs), mInputDim, mTimeSteps);
         Allocation inputRawAlloc = Allocation.createTyped(mRs, inRawType);
-        inputRawAlloc.copyFrom(convertedX);
+        inputRawAlloc.copyFrom(x);
         scriptC_main.set_input_raw(inputRawAlloc);
 
         // initialize activated input data allocation
-        Type cellDataType = Type.createXY(mRs, Element.F32(mRs), mHiddenUnits, timeSteps);
+        Type cellDataType = Type.createXY(mRs, Element.F32(mRs), mHiddenUnits, mTimeSteps);
         Allocation inputsAlloc = Allocation.createTyped(mRs, cellDataType);
         scriptC_main.set_inputs(inputsAlloc);
 

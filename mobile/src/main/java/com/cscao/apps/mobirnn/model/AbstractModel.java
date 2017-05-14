@@ -16,13 +16,19 @@ abstract class AbstractModel {
 
     private static final String[] mActivationWeightNames = /* order matters*/
             {"w_in", "b_in", "w_out", "b_out"};
-    private static final String mModelNameTemplate = "%dlayer%dunits.pb";
+    private static final String[] mDataNodeNames = {"x", "y"};
+    private static final String mModelNameTemplate = "data/%dlayer%dunit.pb";
+    private static final String mDataName = "data/data.pb";
     private static final String mRnnWeightTemplate =
             "rnn/multi_rnn_cell/cell_%d/basic_lstm_cell/weights";
     private static final String mRnnBiaseTemplate =
             "rnn/multi_rnn_cell/cell_%d/basic_lstm_cell/biases";
     final int mOutputDim = 6;
     final int mInputDim = 9;
+    final int mTimeSteps = 128;
+    final int mDataSize = 500;
+    private static float[][] mInputs;
+    private static int[] mLabels;
 
     private String[] mRnnWeightNames;
     private String[] mRnnBiaseNames;
@@ -47,6 +53,7 @@ abstract class AbstractModel {
         mHiddenUnits = hiddenUnits;
         init();
         loadModel();
+        loadData();
     }
 
     private void init() {
@@ -91,5 +98,33 @@ abstract class AbstractModel {
         }
     }
 
-    protected abstract int predictLabel(float[][] x);
+    private void loadData() {
+        TensorFlowInferenceInterface tensorFlowInferenceInterface =
+                new TensorFlowInferenceInterface(mContext.getAssets(), mDataName);
+
+        tensorFlowInferenceInterface.run(mDataNodeNames);
+
+        float[] inputsRaw = new float[mDataSize * mTimeSteps * mInputDim];
+        tensorFlowInferenceInterface.fetch(mDataNodeNames[0], inputsRaw);
+
+        mInputs = new float[mDataSize][mTimeSteps * mInputDim];
+        for (int i = 0; i < mDataSize; i++) {
+            System.arraycopy(inputsRaw, i * mTimeSteps * mInputDim, mInputs[i], 0,
+                    mTimeSteps * mInputDim);
+        }
+
+        mLabels = new int[mDataSize];
+        tensorFlowInferenceInterface.fetch(mDataNodeNames[1], mLabels);
+
+    }
+
+    int[] getLabels() {
+        return mLabels;
+    }
+
+    float[][] getInputs() {
+        return mInputs;
+    }
+
+    abstract int predictLabel(float[] x);
 }

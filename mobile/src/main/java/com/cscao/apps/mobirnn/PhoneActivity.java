@@ -1,7 +1,5 @@
 package com.cscao.apps.mobirnn;
 
-import static com.cscao.apps.mobirnn.helper.Util.getInputData;
-import static com.cscao.apps.mobirnn.helper.Util.getLabels;
 import static com.cscao.apps.mobirnn.helper.Util.getTimestampString;
 
 import android.Manifest;
@@ -22,13 +20,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
-import com.cscao.apps.mobirnn.helper.Util;
 import com.cscao.apps.mobirnn.model.Model;
 import com.cscao.apps.mobirnn.model.ModelMode;
 import com.orhanobut.logger.Logger;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Locale;
 import java.util.Random;
 
@@ -44,7 +39,7 @@ public class PhoneActivity extends Activity implements NumberPicker.OnValueChang
     private ProgressBar mResultProgress;
 
     private Task mTask;
-    private long mSeed;
+    private int mSeed;
     private ModelMode mRunMode = ModelMode.TensorFlow;
     private int mSampleSize;
     final String[] mSampleSizes = {"1", "10", "50", "100", "200", "500"};
@@ -125,11 +120,8 @@ public class PhoneActivity extends Activity implements NumberPicker.OnValueChang
             mStatusTextView.setText("");
             mTask = new Task();
             mTask.mMode = mRunMode;
-            mTask.mSampleSize = mSampleSize;
-            mTask.mSeed = mSeed;
-
             Logger.i("running task");
-            mTask.execute(Util.getDataPath());
+            mTask.execute(mSampleSize, mSeed);
             Toast.makeText(this, R.string.run_model, Toast.LENGTH_SHORT).show();
         } else {
             mTask.cancel(true);
@@ -154,16 +146,13 @@ public class PhoneActivity extends Activity implements NumberPicker.OnValueChang
     }
 
     public void changeSeed(View view) {
-        mSeed = System.currentTimeMillis();
+        mSeed = (int) System.currentTimeMillis();
         Toast.makeText(this, R.string.seed_changed, Toast.LENGTH_SHORT).show();
     }
 
 
-    private class Task extends AsyncTask<String, String, Pair<Float, Float>> {
-
+    private class Task extends AsyncTask<Integer, String, Pair<Float, Float>> {
         private ModelMode mMode;
-        private int mSampleSize;
-        private long mSeed;
 
         private int[] getSampledLabels(int[] labels, int[] indices) {
             int size = indices.length;
@@ -174,9 +163,9 @@ public class PhoneActivity extends Activity implements NumberPicker.OnValueChang
             return sampledLabels;
         }
 
-        private float[][][] getSampledInputs(float[][][] inputs, int[] indices) {
+        private float[][] getSampledInputs(float[][] inputs, int[] indices) {
             int size = indices.length;
-            float[][][] sampledInputs = new float[size][][];
+            float[][] sampledInputs = new float[size][];
             for (int i = 0; i < size; i++) {
                 sampledInputs[i] = inputs[indices[i]];
             }
@@ -184,9 +173,9 @@ public class PhoneActivity extends Activity implements NumberPicker.OnValueChang
         }
 
         @NonNull
-        private int[] getIndices(int high, int size) {
+        private int[] getIndices(int high, int size, int seed) {
             int[] indices = new int[size];
-            Random r = new Random(mSeed);
+            Random r = new Random(seed);
             for (int i = 0; i < indices.length; i++) {
                 indices[i] = r.nextInt(high);
             }
@@ -196,51 +185,33 @@ public class PhoneActivity extends Activity implements NumberPicker.OnValueChang
         }
 
         @Override
-        protected Pair<Float, Float> doInBackground(String... params) {
-            String dataRootPath = params[0];
+        protected Pair<Float, Float> doInBackground(Integer... params) {
+            int sampleSize = params[0];
+            int seed = params[1];
+
             Log.d("run", "begin model loading");
-            if (!new File(dataRootPath).exists()) {
-                publishProgress("-1", "model and data not exist!");
-                this.cancel(true);
-            }
-            Model model = new Model(getApplicationContext(), mMode, 2, 64);
+            Model model = new Model(getApplicationContext(), mMode, 2, 32);
 
             publishProgress("0", "model loaded");
             Log.d("run", "model created");
 
-            int[] indices = new int[0];
-            float[][][] inputs = new float[0][][];
-            try {
-                publishProgress("0", "loading input data...");
-                inputs = getInputData(dataRootPath);
-                indices = getIndices(inputs.length, mSampleSize);
-                inputs = getSampledInputs(inputs, indices);
-                publishProgress("0", "input data loaded");
-            } catch (IOException e) {
-                Logger.e("input data cannot be parsed");
-                publishProgress("-1", "input data cannot be parsed");
-                e.printStackTrace();
-                this.cancel(true);
-            }
+            publishProgress("0", "loading input data...");
+            float[][] inputs = model.loadInputs();
+            int[] indices = getIndices(inputs.length, sampleSize, seed);
 
-            int[] labels = new int[0];
-            try {
-                labels = getLabels(dataRootPath);
-                labels = getSampledLabels(labels, indices);
-                publishProgress("0", "labels loaded");
-            } catch (IOException e) {
-                Logger.e("label data cannot be parsed");
-                publishProgress("-1", "label data cannot be parsed");
-                e.printStackTrace();
-                this.cancel(true);
-            }
+            inputs = getSampledInputs(inputs, indices);
+            publishProgress("0", "input data loaded");
 
-            int[] predictedLabels = new int[mSampleSize];
+            int[] labels = model.loadLabels();
+            labels = getSampledLabels(labels, indices);
+            publishProgress("0", "labels loaded");
+
+            int[] predictedLabels = new int[sampleSize];
 
             long beginTime = System.currentTimeMillis();
             int correct = 0;
             float accuracy = 0;
-            for (int i = 0; i < mSampleSize; i++) {
+            for (int i = 0; i < sampleSize; i++) {
                 if (this.isCancelled()) {
                     break;
                 }

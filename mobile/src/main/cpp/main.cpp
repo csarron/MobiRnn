@@ -98,7 +98,8 @@ Java_com_cscao_apps_mobirnn_model_CpuModel_predictNativeEigen(JNIEnv *env, jobje
             Map<VectorXf> j(linearMap.col(1).data(), hidden_unit);
             Map<VectorXf> f(linearMap.col(2).data(), hidden_unit);
             Map<VectorXf> o(linearMap.col(3).data(), hidden_unit);
-            c = (c.array() * sigmoid(f.array() + 1) + sigmoid(i.array()) * (j.array().tanh())).matrix();
+            c = (c.array() * sigmoid(f.array() + 1) +
+                 sigmoid(i.array()) * (j.array().tanh())).matrix();
             h = (c.array().tanh() * sigmoid(o.array())).matrix();
             inputs.col(step) = h;
 
@@ -124,16 +125,16 @@ Java_com_cscao_apps_mobirnn_model_CpuModel_predictNativeEigen(JNIEnv *env, jobje
 
 extern "C"
 JNIEXPORT jint JNICALL
-Java_com_cscao_apps_mobirnn_model_CpuModel_predictNative(JNIEnv *env, jobject  instance,
-                                                      jint layer_size,
-                                                      jint time_steps, jint hidden_unites,
-                                                      jint in_dim,
-                                                      jint out_dim, jfloatArray wIn_,
-                                                      jfloatArray bIn_, jfloatArray convertedWOut_,
-                                                      jfloatArray bOut_,
-                                                      jfloatArray convertedWeights_,
-                                                      jfloatArray convertedBiases_,
-                                                      jfloatArray input_) {
+Java_com_cscao_apps_mobirnn_model_CpuModel_predictNative(JNIEnv *env, jobject instance,
+                                                         jfloatArray input_, jint layer_size,
+                                                         jint time_steps, jint hidden_unites,
+                                                         jint in_dim, jint out_dim,
+                                                         jfloatArray wIn_,
+                                                         jfloatArray bIn_,
+                                                         jfloatArray convertedWOut_,
+                                                         jfloatArray bOut_,
+                                                         jfloatArray convertedWeights_,
+                                                         jfloatArray convertedBiases_) {
 
 
     jfloat *w_in = env->GetFloatArrayElements(wIn_, NULL);

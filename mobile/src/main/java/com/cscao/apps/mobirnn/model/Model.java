@@ -27,7 +27,15 @@ public class Model {
         }
     }
 
-    public int predict(float[][] x) {
+    public int predict(float[] x) {
         return mModel.predictLabel(x);
+    }
+
+    public int[] loadLabels() {
+        return mModel.getLabels();
+    }
+
+    public float[][] loadInputs() {
+        return mModel.getInputs();
     }
 }
