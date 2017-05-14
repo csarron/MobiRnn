@@ -1,15 +1,29 @@
-#include <jni.h>
-#include <string>
+#include <android/log.h>
 #include <Eigen/Dense>
-#include <math.h>
+#include <jni.h>
+
+#ifndef LOG_FLAG
+#define LOG_FLAG true
+#endif // #ifndef LOG_FLAG
+
+void empty(...) {
+}
 
 #define LOG(...) \
-  ((void)__android_log_print(ANDROID_LOG_INFO, "mobirnn::", __VA_ARGS__))
+  (LOG_FLAG ? ((void)__android_log_print(ANDROID_LOG_INFO, "native::", __VA_ARGS__)): ((void) empty(__VA_ARGS__)))
+
+using namespace Eigen;
+
 float sigmoid(float x) {
     return 1 / (1 + expf(-x));
 }
 
-int argmax(float* x, int len) {
+ArrayXXf sigmoid(ArrayXXf arr) {
+    arr *= -1;
+    return (arr.exp() + 1).inverse();
+}
+
+int argMax(float *x, int len) {
     int max = 0;
     float a = 0.0f;
     for (int i = 0; i < len; i++) {
@@ -22,11 +36,10 @@ int argmax(float* x, int len) {
 }
 
 JNIEXPORT jint JNICALL
-Java_com_cscao_apps_mobirnn_model_CpuModel_predictNative(JNIEnv *env, jobject instance,
-                                                         jfloatArray input_, jintArray config_,
-                                                         jfloatArray wIn_, jfloatArray bIn_,
-                                                         jfloatArray wOut_, jfloatArray bOut_,
-                                                         jfloatArray weights_,
+Java_com_cscao_apps_mobirnn_model_CpuModel_predictNative(JNIEnv *env, jfloatArray input_,
+                                                         jintArray config_, jfloatArray wIn_,
+                                                         jfloatArray bIn_, jfloatArray wOut_,
+                                                         jfloatArray bOut_, jfloatArray weights_,
                                                          jfloatArray biases_) {
     jfloat *input = env->GetFloatArrayElements(input_, NULL);
     jint *config = env->GetIntArrayElements(config_, NULL);
@@ -37,7 +50,64 @@ Java_com_cscao_apps_mobirnn_model_CpuModel_predictNative(JNIEnv *env, jobject in
     jfloat *weights = env->GetFloatArrayElements(weights_, NULL);
     jfloat *biases = env->GetFloatArrayElements(biases_, NULL);
 
-    // TODO
+    const int layer_size = config[0];
+    const int time_step = config[1];
+    const int hidden_unit = config[2];
+    const int input_dim = config[3];
+    const int output_dim = config[4];
+
+    LOG("layer_size: %d", layer_size);
+    LOG("time_step: %d", time_step);
+    LOG("hidden_unit: %d", hidden_unit);
+    LOG("input_dim: %d", input_dim);
+    LOG("output_dim: %d", output_dim);
+
+    Map<MatrixXf> inputMat(input, input_dim, time_step);
+    Map<MatrixXf> winMat(wIn, hidden_unit, input_dim);
+    Map<VectorXf> binMat(bIn, hidden_unit);
+    Map<MatrixXf> woutMat(wOut, output_dim, hidden_unit);
+    Map<VectorXf> boutMat(bOut, output_dim);
+    Map<MatrixXf> weightsMat(weights, (4 * hidden_unit) * (2 * hidden_unit), layer_size);
+    Map<MatrixXf> biasesMat(biases, 4 * hidden_unit, layer_size);
+
+    VectorXf c = VectorXf::Zero(hidden_unit);
+    VectorXf h = VectorXf::Zero(hidden_unit);
+    // input activation
+    MatrixXf inputs = MatrixXf::Zero(hidden_unit, time_step);
+    inputs = (winMat * inputMat + binMat).array().max(0).matrix();
+
+    MatrixXf concat = MatrixXf::Zero(hidden_unit, 2);
+//    MatrixXf linearResults = MatrixXf::Zero(hidden_unit, 4);
+
+    // cell computation
+    for (int layer = 0; layer < layer_size; ++layer) {
+        c.setZero();
+        h.setZero();
+        Map<MatrixXf> layerWeights(weightsMat.col(layer).data(), (4 * hidden_unit),
+                                   (2 * hidden_unit));
+        for (int step = 0; step < time_step; ++step) {
+            concat.col(0) = inputs.col(step);
+            concat.col(1) = h;
+            VectorXf linearResults = layerWeights * Map<VectorXf>(concat.data(), concat.size()) +
+                                     biasesMat.col(layer);
+
+            Map<MatrixXf> linearMap(linearResults.data(), hidden_unit, 4);
+            Map<VectorXf> i(linearMap.col(0).data(), hidden_unit);
+            Map<VectorXf> j(linearMap.col(1).data(), hidden_unit);
+            Map<VectorXf> f(linearMap.col(2).data(), hidden_unit);
+            Map<VectorXf> o(linearMap.col(3).data(), hidden_unit);
+            c = (c.array() * sigmoid(f.array() + 1) + sigmoid(i.array()) * (j.array().tanh())).matrix();
+            h = (c.array().tanh() * sigmoid(o.array())).matrix();
+            inputs.col(step) = h;
+
+        }
+    }
+
+    //output activation
+    VectorXf outProb = h * woutMat + boutMat;
+
+    int label;
+    outProb.maxCoeff(&label);
 
     env->ReleaseFloatArrayElements(input_, input, 0);
     env->ReleaseIntArrayElements(config_, config, 0);
@@ -47,11 +117,12 @@ Java_com_cscao_apps_mobirnn_model_CpuModel_predictNative(JNIEnv *env, jobject in
     env->ReleaseFloatArrayElements(bOut_, bOut, 0);
     env->ReleaseFloatArrayElements(weights_, weights, 0);
     env->ReleaseFloatArrayElements(biases_, biases, 0);
+    return (label + 1);
 }
 
 extern "C"
 JNIEXPORT jint JNICALL
-Java_com_cscao_apps_mobirnn_model_Model_predictNative(JNIEnv *env, jobject instance,
+Java_com_cscao_apps_mobirnn_model_Model_predictNative(JNIEnv *env,
                                                       jint layer_size,
                                                       jint time_steps, jint hidden_unites,
                                                       jint in_dim,
@@ -176,5 +247,5 @@ Java_com_cscao_apps_mobirnn_model_Model_predictNative(JNIEnv *env, jobject insta
     env->ReleaseFloatArrayElements(convertedBiases_, biases, 0);
     env->ReleaseFloatArrayElements(input_, inputRaw, 0);
 
-    return argmax(label_prob, out_dim) + 1;
+    return argMax(label_prob, out_dim) + 1;
 }
