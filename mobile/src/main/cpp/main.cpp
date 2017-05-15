@@ -76,7 +76,7 @@ Java_com_cscao_apps_mobirnn_model_CpuModel_predictNativeEigen(JNIEnv *env, jobje
     VectorXf h = VectorXf::Zero(hidden_unit);
     // input activation
     MatrixXf inputs = MatrixXf::Zero(hidden_unit, time_step);
-    inputs = (winMat * inputMat + binMat).array().max(0).matrix();
+    inputs = ((winMat * inputMat).colwise() + binMat).array().max(0).matrix();
 
     MatrixXf concat = MatrixXf::Zero(hidden_unit, 2);
 //    MatrixXf linearResults = MatrixXf::Zero(hidden_unit, 4);
@@ -107,7 +107,7 @@ Java_com_cscao_apps_mobirnn_model_CpuModel_predictNativeEigen(JNIEnv *env, jobje
     }
 
     //output activation
-    VectorXf outProb = h * woutMat + boutMat;
+    VectorXf outProb =  woutMat * h + boutMat;
 
     int label;
     outProb.maxCoeff(&label);
