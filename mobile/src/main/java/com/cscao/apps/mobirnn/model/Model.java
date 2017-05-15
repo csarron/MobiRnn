@@ -14,7 +14,13 @@ public class Model {
     public Model(Context context, ModelMode mode, int layerSize, int hiddenUnits) {
         switch (mode) {
             case CPU:
-                mModel = new CpuModel(context, layerSize, hiddenUnits);
+                mModel = new CpuModel(context, layerSize, hiddenUnits, ModelMode.CPU);
+                break;
+            case Native:
+                mModel = new CpuModel(context, layerSize, hiddenUnits, ModelMode.Native);
+                break;
+            case Eigen:
+                mModel = new CpuModel(context, layerSize, hiddenUnits, ModelMode.Eigen);
                 break;
             case GPU:
                 mModel = new GpuModel(context, layerSize, hiddenUnits);

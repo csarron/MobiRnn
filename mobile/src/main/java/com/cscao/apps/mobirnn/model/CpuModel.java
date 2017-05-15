@@ -24,8 +24,11 @@ class CpuModel extends AbstractModel {
     private float[][] mWOut;
     private float[][][] mWeights;
 
-    CpuModel(Context context, int layerSize, int hiddenUnits) {
+    private ModelMode mMode;
+
+    CpuModel(Context context, int layerSize, int hiddenUnits, ModelMode mode) {
         super(context, layerSize, hiddenUnits);
+        mMode = mode;
         transformParams();
     }
 
@@ -76,10 +79,19 @@ class CpuModel extends AbstractModel {
 
     @Override
     protected int predictLabel(float[] x) {
-        return predictNativeCpu(x);
+        switch (mMode) {
+            case CPU:
+                return predictJavaCpu(x);
+            case Native:
+                return predictNativeCpu(x);
+            case Eigen:
+                return predictEigenCpu(x);
+            default:
+                return predictJavaCpu(x);
+        }
     }
 
-    private int predictJava(float[] input) {
+    private int predictJavaCpu(float[] input) {
         float[][] x = new float[mTimeSteps][mInputDim];
         for (int i = 0; i < mTimeSteps; i++) {
             System.arraycopy(input, i * mInputDim, x[i], 0, mInputDim);
@@ -107,16 +119,19 @@ class CpuModel extends AbstractModel {
         return predictNative(x, mLayerSize, mTimeSteps, mHiddenUnits, mInputDim, mOutputDim,
                 super.mWIn, mBIn, super.mWOut, mBOut, alter2Dto1D(super.mRnnWeights),
                 alter2Dto1D(mRnnBiases));
-//        return predictNativeEigen(x,
-//                new int[]{mLayerSize, mTimeSteps, mHiddenUnits, mInputDim, mOutputDim}, super.mWIn,
-//                mBIn, super.mWOut, mBOut, alter2Dto1D(super.mRnnWeights), alter2Dto1D(mRnnBiases));
+    }
+
+    private int predictEigenCpu(float[] x) {
+        return predictNativeEigen(x,
+                new int[]{mLayerSize, mTimeSteps, mHiddenUnits, mInputDim, mOutputDim}, super.mWIn,
+                mBIn, super.mWOut, mBOut, alter2Dto1D(super.mRnnWeights), alter2Dto1D(mRnnBiases));
 
     }
 
-    public native int predictNativeEigen(float[] input, int[] config, float[] wIn, float[] bIn,
+    private native int predictNativeEigen(float[] input, int[] config, float[] wIn, float[] bIn,
             float[] wOut, float[] bOut, float[] weights, float[] biases);
 
-    public native int predictNative(float[] input, int layer_size,
+    private native int predictNative(float[] input, int layer_size,
             int time_steps, int hidden_unites, int in_dim, int out_dim, float[] wIn, float[] bIn,
             float[] wOut, float[] bOut, float[] weights, float[] biases);
 }

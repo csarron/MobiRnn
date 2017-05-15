@@ -16,6 +16,7 @@ import android.util.Pair;
 import android.view.View;
 import android.widget.NumberPicker;
 import android.widget.ProgressBar;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -37,34 +38,49 @@ public class PhoneActivity extends Activity implements NumberPicker.OnValueChang
     private ToggleButton controlToggle;
     private TextView mStatusTextView;
     private ProgressBar mResultProgress;
-
+    private RadioGroup mRadioGroup;
+    private NumberPicker mSizePicker;
+    private NumberPicker mModelPicker;
     private Task mTask;
     private int mSeed;
     private ModelMode mRunMode = ModelMode.TensorFlow;
     private int mSampleSize;
+    private String mModelType;
     final String[] mSampleSizes = {"1", "10", "50", "100", "200", "500"};
+    final String[] mModels =
+            {"2layer32unit", "2layer64unit", "2layer128unit", "2layer256unit", "3layer64unit"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         controlToggle = (ToggleButton) findViewById(R.id.toggle_control);
-
+        mRadioGroup = (RadioGroup) findViewById(R.id.radio_group);
         mStatusTextView = (TextView) findViewById(R.id.tv_status);
         mStatusTextView.setMovementMethod(new ScrollingMovementMethod());
         mResultProgress = (ProgressBar) findViewById(R.id.progress);
         mResultProgress.setMax(100);
 
-        NumberPicker picker = (NumberPicker) findViewById(R.id.number_picker);
-        picker.setDescendantFocusability(NumberPicker.FOCUS_BLOCK_DESCENDANTS);
-        picker.setOnValueChangedListener(this);
-        picker.setDisplayedValues(mSampleSizes);
-        picker.setMinValue(0);
-        picker.setMaxValue(mSampleSizes.length - 1);
-        picker.setWrapSelectorWheel(true);
-        picker.setValue(0);
+        mSizePicker = (NumberPicker) findViewById(R.id.sample_size_picker);
+        mSizePicker.setDescendantFocusability(NumberPicker.FOCUS_BLOCK_DESCENDANTS);
+        mSizePicker.setOnValueChangedListener(this);
+        mSizePicker.setDisplayedValues(mSampleSizes);
+        mSizePicker.setMinValue(0);
+        mSizePicker.setMaxValue(mSampleSizes.length - 1);
+        mSizePicker.setWrapSelectorWheel(true);
+        mSizePicker.setValue(0);
         mSampleSize = 1;
         Logger.i("Sample size initial value: %s", mSampleSize);
+
+        mModelPicker = (NumberPicker) findViewById(R.id.model_picker);
+        mModelPicker.setDescendantFocusability(NumberPicker.FOCUS_BLOCK_DESCENDANTS);
+        mSizePicker.setOnValueChangedListener(this);
+        mModelPicker.setDisplayedValues(mModels);
+        mModelPicker.setMinValue(0);
+        mModelPicker.setMaxValue(mModels.length - 1);
+        mModelPicker.setWrapSelectorWheel(true);
+        mModelPicker.setValue(0);
+        mModelType = mModels[0];
 
         checkPermissions();
 
@@ -102,6 +118,14 @@ public class PhoneActivity extends Activity implements NumberPicker.OnValueChang
                 mRunMode = ModelMode.CPU;
                 Logger.d("selected cpu mode");
                 break;
+            case R.id.radio_native:
+                mRunMode = ModelMode.Native;
+                Logger.d("selected native mode");
+                break;
+            case R.id.radio_eigen:
+                mRunMode = ModelMode.Eigen;
+                Logger.d("selected eigen mode");
+                break;
             case R.id.radio_gpu:
                 mRunMode = ModelMode.GPU;
                 Logger.d("selected gpu mode");
@@ -120,6 +144,7 @@ public class PhoneActivity extends Activity implements NumberPicker.OnValueChang
             mStatusTextView.setText("");
             mTask = new Task();
             mTask.mMode = mRunMode;
+            mTask.mModelType = mModelType;
             Logger.i("running task");
             mTask.execute(mSampleSize, mSeed);
             Toast.makeText(this, R.string.run_model, Toast.LENGTH_SHORT).show();
@@ -141,8 +166,14 @@ public class PhoneActivity extends Activity implements NumberPicker.OnValueChang
 
     @Override
     public void onValueChange(NumberPicker picker, int oldVal, int newVal) {
+        if (picker == mModelPicker) {
+            mModelType = mModels[newVal];
+            Logger.i("model changed from %s to %s", mModels[oldVal], mModels[newVal]);
+        }
+        if (picker == mSizePicker) {
 //        Logger.i("Sample size changed from %s to %s", mSampleSizes[oldVal], mSampleSizes[newVal]);
-        mSampleSize = Integer.parseInt(mSampleSizes[newVal]);
+            mSampleSize = Integer.parseInt(mSampleSizes[newVal]);
+        }
     }
 
     public void changeSeed(View view) {
@@ -150,9 +181,15 @@ public class PhoneActivity extends Activity implements NumberPicker.OnValueChang
         Toast.makeText(this, R.string.seed_changed, Toast.LENGTH_SHORT).show();
     }
 
+    private void setRadioGroup(boolean enable) {
+        for(int i = 0; i < mRadioGroup.getChildCount(); i++){
+            mRadioGroup.getChildAt(i).setEnabled(enable);
+        }
+    }
 
     private class Task extends AsyncTask<Integer, String, Pair<Float, Float>> {
         private ModelMode mMode;
+        private String mModelType;
 
         private int[] getSampledLabels(int[] labels, int[] indices) {
             int size = indices.length;
@@ -242,6 +279,9 @@ public class PhoneActivity extends Activity implements NumberPicker.OnValueChang
 
             String info = String.format(Locale.US,
                     "%s: loading model...\n", getTimestampString());
+            setRadioGroup(false);
+            mModelPicker.setEnabled(false);
+            mSizePicker.setEnabled(false);
             mStatusTextView.append(info);
             mResultProgress.setProgress(0);
         }
@@ -269,6 +309,9 @@ public class PhoneActivity extends Activity implements NumberPicker.OnValueChang
 
             }
 
+            setRadioGroup(true);
+            mModelPicker.setEnabled(true);
+            mSizePicker.setEnabled(true);
             controlToggle.setChecked(false);
         }
 
