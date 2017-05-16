@@ -1,6 +1,6 @@
 # MobiRnn on Android
 
-##Intro
+## Intro
 This repo is for running [LSTM model](https://github.com/csarron/lstm_har) on mobile devices. 
 Currently we support the following mode:
 - Plain CPU (Java)
