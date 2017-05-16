@@ -6,4 +6,4 @@ find_library(log-lib log )
 
 target_link_libraries(main ${log-lib} )
 
-target_include_directories(main PRIVATE build/eigen-eigen-67e894c6cd8f/)
+target_include_directories(main PRIVATE build/eigen/)

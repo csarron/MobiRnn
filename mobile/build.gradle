@@ -1,3 +1,5 @@
+import groovy.io.FileType
+
 apply plugin: 'com.android.application'
 
 def keystorePropertiesFile = rootProject.file("local.properties")
@@ -22,17 +24,20 @@ android {
     }
 
     signingConfigs {
-        release {
+        config {
             keyAlias keystoreProperties['keyAlias']
             keyPassword keystoreProperties['keyPassword']
-            storeFile file(keystoreProperties['storeFile'])
+            storeFile rootProject.file(keystoreProperties['storeFile'])
             storePassword keystoreProperties['storePassword']
         }
     }
 
     buildTypes {
+        debug{
+            signingConfig signingConfigs.config
+        }
         release {
-            signingConfig signingConfigs.release
+            signingConfig signingConfigs.config
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
@@ -48,6 +53,11 @@ android {
             jniLibs.srcDirs = ['../libs']
         }
     }
+    lintOptions {
+        //lint rules of conduct
+        abortOnError true
+        htmlReport true
+    }
 }
 
 configurations {
@@ -60,8 +70,8 @@ dependencies {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
     //wearApp project(':wear')
-    compile rootProject.ext.dependencies["wearable"]
-    compile rootProject.ext.dependencies["gmswear"]
+    compile rootProject.ext.dependencies["annotation"]
+    compile rootProject.ext.dependencies["compat"]
     compile rootProject.ext.dependencies["ioutil"]
     compile rootProject.ext.dependencies["logger"]
     lol rootProject.ext.dependencies["eigen"]
@@ -73,15 +83,25 @@ dependencies {
 
 task prepareEigen(type: Copy) {
     def zipPath = configurations.lol.find { it.name.startsWith("eigen") }
-    from zipTree(file(zipPath))
+
+    from zipTree(file(zipPath)).matching {
+        include "*/Eigen/**"
+    }
     into("${project.buildDir}")
+
+    doLast{
+        file("${project.buildDir}").eachFileMatch(FileType.DIRECTORIES, ~/eigen.*/) {
+            mFile -> mFile.renameTo("${project.buildDir}/eigen")
+        }
+    }
+
 }
 
 preBuild.dependsOn prepareEigen
 
-task copyApk(type: Copy) {
+task publish(type: Copy) {
     from fileTree("build/outputs/apk/")
     into("../blob/")
-    include '*-release.apk'
-
+    include "*-release.apk"
 }
+publish.dependsOn build

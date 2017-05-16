@@ -44,6 +44,7 @@ ext {
 
     wear = "1.4.0"
     gmswear = "0.94.1"
+    support = "25.3.1"
     log = "1.15"
     ioutil = "2.4"
     kryo = "4.0.0"
@@ -81,6 +82,8 @@ ext {
             "tensorflow" : files("libs/libandroid_tensorflow_inference_java.jar"),
             "eigen"      : "eigen:eigen:${eigen}@zip",
 
+            "annotation" : "com.android.support:support-annotations:${support}",
+            "compat"     : "com.android.support:support-compat:${support}",
             "rxandroid"  : "io.reactivex:rxandroid:${rxandroid}",
             "rxjava"     : "io.reactivex:rxjava:${rxjava}",
             "wearable"   : "com.google.android.support:wearable:${wear}",
