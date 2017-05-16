@@ -20,6 +20,14 @@ allprojects {
         jcenter()
         maven { url "https://jitpack.io" }
     }
+    repositories {
+        ivy {
+            url 'https://bitbucket.org'
+            layout 'pattern', {
+                artifact '/[organisation]/[module]/get/[revision].[ext]'
+            }
+        }
+    }
 }
 
 task clean(type: Delete) {
@@ -45,6 +53,8 @@ ext {
     testrunner = "0.5"
     mockito = "1.10.19"
     robolectric = "3.1.4"
+    eigen = "3.3.3"
+    eigen_commit = "67e894c6cd8f"
     id = "com.cscao.apps.mobirnn"
     abi = "armeabi-v7a,arm64-v8a,x86_64"
     cppFlags = "-std=c++11 -frtti -fexceptions"
@@ -69,6 +79,7 @@ ext {
             "ioutil"     : "commons-io:commons-io:${ioutil}",
             "kryo"       : "com.esotericsoftware:kryo:${kryo}",
             "tensorflow" : files("libs/libandroid_tensorflow_inference_java.jar"),
+            "eigen"      : "eigen:eigen:${eigen}@zip",
 
             "rxandroid"  : "io.reactivex:rxandroid:${rxandroid}",
             "rxjava"     : "io.reactivex:rxjava:${rxjava}",

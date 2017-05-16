@@ -40,7 +40,7 @@ android {
     }
     externalNativeBuild {
         cmake {
-            path "src/main/cpp/CMakeLists.txt"
+            path "CMakeLists.txt"
         }
     }
     sourceSets {
@@ -48,6 +48,10 @@ android {
             jniLibs.srcDirs = ['../libs']
         }
     }
+}
+
+configurations {
+    lol
 }
 
 dependencies {
@@ -60,8 +64,24 @@ dependencies {
     compile rootProject.ext.dependencies["gmswear"]
     compile rootProject.ext.dependencies["ioutil"]
     compile rootProject.ext.dependencies["logger"]
-    compile rootProject.ext.dependencies["kryo"]
+    lol rootProject.ext.dependencies["eigen"]
     compile rootProject.ext.dependencies["tensorflow"]
 
     testCompile rootProject.ext.dependencies["junit"]
+}
+
+
+task prepareEigen(type: Copy) {
+    def zipPath = configurations.lol.find { it.name.startsWith("eigen") }
+    from zipTree(file(zipPath))
+    into("${project.buildDir}")
+}
+
+preBuild.dependsOn prepareEigen
+
+task copyApk(type: Copy) {
+    from fileTree("build/outputs/apk/")
+    into("../blob/")
+    include '*-release.apk'
+
 }
