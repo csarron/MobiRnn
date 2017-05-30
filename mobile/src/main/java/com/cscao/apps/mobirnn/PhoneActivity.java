@@ -182,7 +182,7 @@ public class PhoneActivity extends Activity implements NumberPicker.OnValueChang
     }
 
     private void setRadioGroup(boolean enable) {
-        for(int i = 0; i < mRadioGroup.getChildCount(); i++){
+        for (int i = 0; i < mRadioGroup.getChildCount(); i++) {
             mRadioGroup.getChildAt(i).setEnabled(enable);
         }
     }
@@ -245,29 +245,31 @@ public class PhoneActivity extends Activity implements NumberPicker.OnValueChang
 
             int[] predictedLabels = new int[sampleSize];
 
-            long beginTime = System.currentTimeMillis();
             int correct = 0;
             float accuracy = 0;
+            float totalTime =0;
             for (int i = 0; i < sampleSize; i++) {
                 if (this.isCancelled()) {
                     break;
                 }
+                long beginTime = System.currentTimeMillis();
                 predictedLabels[i] = model.predict(inputs[i]);
+                long time = System.currentTimeMillis()- beginTime;
+                totalTime += time;
                 boolean isCorrect = (predictedLabels[i] == labels[i]);
                 if (isCorrect) {
                     correct++;
                     accuracy = (float) (correct * 100.0 / (i + 1));
                 }
                 String progress = String.format(Locale.US,
-                        "case:%03d,output:%d,label:%d,%s",
-                        indices[i], predictedLabels[i], labels[i], isCorrect ? "right" : "wrong");
+                        "case:%03d,output:%d,label:%d,%s,%4d ms",
+                        indices[i], predictedLabels[i], labels[i],
+                        isCorrect ? "right" : "wrong", time);
                 Logger.d(progress);
                 publishProgress("" + (i + 1), progress);
-
             }
-            long endTime = System.currentTimeMillis();
 
-            float time = (float) ((endTime - beginTime) / 1000.0);
+            float time = (totalTime / sampleSize);
             return Pair.create(accuracy, time);
         }
 
@@ -301,7 +303,7 @@ public class PhoneActivity extends Activity implements NumberPicker.OnValueChang
                 float accuracy = pair.first;
                 float time = pair.second;
                 String show = String.format(Locale.US,
-                        "Accuracy is: %s  %%. Time spent: %s s", accuracy, time);
+                        "Accuracy is: %s  %%. Average: %s ms", accuracy, time);
                 String status = String.format(Locale.US, "%s: task finished\n",
                         getTimestampString());
                 mStatusTextView.append(status);
