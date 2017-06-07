@@ -16,9 +16,6 @@ import java.util.Arrays;
  */
 
 class CpuModel extends AbstractModel {
-    static {
-        System.loadLibrary("main");
-    }
 
     private float[][] mWIn;
     private float[][] mWOut;

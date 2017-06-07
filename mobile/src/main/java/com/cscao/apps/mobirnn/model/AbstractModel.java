@@ -13,6 +13,9 @@ import java.util.Locale;
  */
 
 abstract class AbstractModel {
+    static {
+        System.loadLibrary("mobirnn");
+    }
 
     private static final String[] mActivationWeightNames = /* order matters*/
             {"w_in", "b_in", "w_out", "b_out"};

@@ -75,6 +75,7 @@ dependencies {
     compile rootProject.ext.dependencies["ioutil"]
     compile rootProject.ext.dependencies["logger"]
     lol rootProject.ext.dependencies["eigen"]
+    lol rootProject.ext.dependencies["opencl"]
     compile rootProject.ext.dependencies["tensorflow"]
 
     testCompile rootProject.ext.dependencies["junit"]
@@ -97,7 +98,22 @@ task prepareEigen(type: Copy) {
 
 }
 
+task prepareOpenCLHeader(type: Copy) {
+    def zipPath = configurations.lol.find { it.name.startsWith("OpenCLHeaders") }
+
+    from zipTree(file(zipPath))
+    into("${project.buildDir}")
+
+    doLast{
+        file("${project.buildDir}").eachFileMatch(FileType.DIRECTORIES, ~/OpenCLHeaders.*/) {
+            mFile -> mFile.renameTo("${project.buildDir}/opencl")
+        }
+    }
+
+}
+
 preBuild.dependsOn prepareEigen
+preBuild.dependsOn prepareOpenCLHeader
 
 task publish(type: Copy) {
     from fileTree("build/outputs/apk/")
