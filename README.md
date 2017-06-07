@@ -3,11 +3,13 @@
 ## Intro
 This repo is for running [LSTM model](https://github.com/csarron/lstm_har) on mobile devices. 
 Currently we support the following mode:
-- Plain CPU (Java)
-- Native CPU (C)
-- GPU (RenderScript)
-- Eigen CPU (C++)
-- TensorFlow CPU (Java)
+- [x] Plain CPU (Java)
+- [x] TensorFlow CPU (Java)
+- [x] Native CPU (C)
+- [x] Eigen CPU (C++)
+- [x] GPU (RenderScript)
+- [ ] GPU (OpenCL)
+- [ ] GPU (Vulkan)
 
 ## Usage
 Just run `./gradlew iR` to install MobiRNN on your connected phone. 
